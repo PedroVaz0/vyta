@@ -1,98 +1,129 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from "expo-router";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+const COLORS = {
+  teal: "#007C94",
+  orange: "#FF7A59",
+  white: "#FFFFFF",
+};
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+export default function WelcomeScreen() {
+  const router = useRouter();
+
+  const goToLogin = (role: "medico" | "paciente") => {
+    router.push({ pathname: "/login", params: { role } });
+  };
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <View style={styles.container}>
+      {/* Área superior branca com logo */}
+      <View style={styles.top}>
+        <Image
+          source={require("../components/VytaLogo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.brand}>vyta</Text>
+        <Text style={styles.slogan}>saúde que te acompanha</Text>
+      </View>
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+      {/* Cartão inferior em teal */}
+      <View style={styles.bottomCard}>
+        <Text style={styles.welcomeTitle}>Bem vindo</Text>
+        <Text style={styles.welcomeSubtitle}>
+          Escolha seu perfil para continuar
+        </Text>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <View style={styles.buttonsRow}>
+          <Pressable
+            style={[styles.button, styles.buttonOrange]}
+            onPress={() => goToLogin("medico")}
+          >
+            <Text style={styles.buttonTextWhite}>Médico</Text>
+          </Pressable>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+          <Pressable
+            style={[styles.button, styles.buttonWhite]}
+            onPress={() => goToLogin("paciente")}
+          >
+            <Text style={styles.buttonTextOrange}>Paciente</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: COLORS.white,
   },
-  safeArea: {
+  top: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  logo: {
+    width: 70,
+    height: 70,
+    marginBottom: 8,
   },
-  title: {
-    textAlign: 'center',
+  brand: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: COLORS.orange,
   },
-  code: {
-    textTransform: 'uppercase',
+  slogan: {
+    fontSize: 13,
+    color: "#333333",
+    marginTop: 2,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  bottomCard: {
+    backgroundColor: COLORS.teal,
+    borderTopLeftRadius: 48,
+    borderTopRightRadius: 48,
+    paddingTop: 40,
+    paddingBottom: 56,
+    paddingHorizontal: 32,
+    alignItems: "center",
+  },
+  welcomeTitle: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: COLORS.white,
+    marginBottom: 6,
+  },
+  welcomeSubtitle: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.white,
+    marginBottom: 28,
+    textAlign: "center",
+  },
+  buttonsRow: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  button: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 30,
+  },
+  buttonOrange: {
+    backgroundColor: COLORS.orange,
+  },
+  buttonWhite: {
+    backgroundColor: COLORS.white,
+  },
+  buttonTextWhite: {
+    color: COLORS.white,
+    fontWeight: "700",
+    fontSize: 15,
+  },
+  buttonTextOrange: {
+    color: COLORS.orange,
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
