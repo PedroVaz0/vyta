@@ -31,6 +31,11 @@ export default function LoginScreen() {
   const handleEntrar = () => {
     // TODO: chamar a API de autenticação, passando cpf, senha e role
     console.log("Login", { role, cpf, senha });
+
+    // Por enquanto, navega direto para a Home do paciente.
+    // Quando o backend estiver pronto, faça essa navegação só depois
+    // de confirmar que o login deu certo.
+    router.replace("/home");
   };
 
   return (
@@ -100,7 +105,7 @@ export default function LoginScreen() {
           <Text style={styles.signupText}>Não tem uma conta? </Text>
           <Pressable
             onPress={() =>
-              router.push({ pathname: "/cadastro" as any, params: { role } })
+              router.push({ pathname: "/cadastro", params: { role } })
             }
           >
             <Text style={styles.signupLink}>Cadastrar</Text>
