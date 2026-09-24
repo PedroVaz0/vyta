@@ -1,52 +1,57 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from 'react';
 import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  StyleSheet,
   Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
-  teal: "#007C94",
-  orange: "#FF7A59",
-  white: "#FFFFFF",
-  gray: "#9AA0A6",
-  border: "#D9D9D9",
+  teal: '#007C94',
+  orange: '#FF7A59',
+  white: '#FFFFFF',
+  gray: '#9AA0A6',
+  border: '#D9D9D9',
 };
 
 export default function LoginScreen() {
   const { role } = useLocalSearchParams<{ role?: string }>();
   const router = useRouter();
 
-  const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
+  const [cpf, setCpf] = useState('');
+  const [senha, setSenha] = useState('');
   const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleEntrar = () => {
     // TODO: chamar a API de autenticação, passando cpf, senha e role
-    console.log("Login", { role, cpf, senha });
+    console.log('Login', { role, cpf, senha });
 
     // Por enquanto, navega direto para a Home do paciente.
     // Quando o backend estiver pronto, faça essa navegação só depois
     // de confirmar que o login deu certo.
-    router.replace("/home");
+    router.replace('/home');
   };
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* Logo + título */}
       <View style={styles.header}>
         <Image
-          source={require("../components/VytaLogo.png")}
+          source={require('../components/VytaLogo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
@@ -79,18 +84,14 @@ export default function LoginScreen() {
             hitSlop={10}
           >
             <MaterialCommunityIcons
-              name={senhaVisivel ? "eye-off-outline" : "eye-outline"}
+              name={senhaVisivel ? 'eye-off-outline' : 'eye-outline'}
               size={22}
               color={COLORS.gray}
             />
           </Pressable>
         </View>
 
-        <Pressable
-          onPress={() => {
-            /* TODO: navegar para recuperação de senha */
-          }}
-        >
+        <Pressable onPress={() => { /* TODO: navegar para recuperação de senha */ }}>
           <Text style={styles.forgotPassword}>Esqueci a minha senha</Text>
         </Pressable>
       </View>
@@ -105,7 +106,7 @@ export default function LoginScreen() {
           <Text style={styles.signupText}>Não tem uma conta? </Text>
           <Pressable
             onPress={() =>
-              router.push({ pathname: "/cadastro", params: { role } })
+              router.push({ pathname: '/cadastro', params: { role } })
             }
           >
             <Text style={styles.signupLink}>Cadastrar</Text>
@@ -120,10 +121,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   header: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 90,
   },
   logo: {
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.orange,
   },
   form: {
@@ -147,12 +148,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     fontSize: 15,
-    color: "#333333",
+    color: '#333333',
     marginBottom: 16,
   },
   passwordWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 24,
@@ -162,13 +163,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#333333",
+    color: '#333333',
   },
   eyeButton: {
     padding: 4,
   },
   forgotPassword: {
-    alignSelf: "flex-end",
+    alignSelf: 'flex-end',
     color: COLORS.gray,
     fontSize: 12,
     marginTop: 10,
@@ -181,25 +182,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     borderRadius: 28,
     paddingVertical: 16,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 20,
   },
   enterButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   signupRow: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   signupText: {
-    color: "#333333",
+    color: '#333333',
     fontSize: 13,
   },
   signupLink: {
     color: COLORS.teal,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });

@@ -1,22 +1,23 @@
-import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated,
-  Dimensions,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
   View,
-} from "react-native";
-import Svg, { Path } from "react-native-svg";
+  Text,
+  StyleSheet,
+  Pressable,
+  Image,
+  Dimensions,
+  Animated,
+} from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get('window');
 
 const COLORS = {
-  teal: "#007C94",
-  orange: "#FF7A59",
-  white: "#FFFFFF",
+  teal: '#007C94',
+  orange: '#FF7A59',
+  white: '#FFFFFF',
 };
 
 const SPLASH_DURATION = 2000; // tempo que a splash fica visível, em ms
@@ -24,6 +25,7 @@ const FADE_DURATION = 500; // duração da transição suave, em ms
 
 export default function IndexScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [showSplash, setShowSplash] = useState(true);
 
   const splashOpacity = useRef(new Animated.Value(1)).current;
@@ -49,8 +51,8 @@ export default function IndexScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  const goToLogin = (role: "medico" | "paciente") => {
-    router.push({ pathname: "/login", params: { role } });
+  const goToLogin = (role: 'medico' | 'paciente') => {
+    router.push({ pathname: '/login', params: { role } });
   };
 
   return (
@@ -58,11 +60,11 @@ export default function IndexScreen() {
       {/* Tela de boas-vindas (fica embaixo, vai aparecendo com o fade) */}
       <Animated.View
         style={[styles.fullScreen, { opacity: welcomeOpacity }]}
-        pointerEvents={showSplash ? "none" : "auto"}
+        pointerEvents={showSplash ? 'none' : 'auto'}
       >
-        <View style={styles.top}>
+        <View style={[styles.top, { paddingTop: insets.top }]}>
           <Image
-            source={require("../components/VytaLogo.png")}
+            source={require('../components/VytaLogo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -70,7 +72,7 @@ export default function IndexScreen() {
           <Text style={styles.slogan}>saúde que te acompanha</Text>
         </View>
 
-        <View style={styles.bottomCard}>
+        <View style={[styles.bottomCard, { paddingBottom: 56 + insets.bottom }]}>
           <Text style={styles.welcomeTitle}>Bem vindo</Text>
           <Text style={styles.welcomeSubtitle}>
             Escolha seu perfil para continuar
@@ -79,14 +81,14 @@ export default function IndexScreen() {
           <View style={styles.buttonsRow}>
             <Pressable
               style={[styles.button, styles.buttonOrange]}
-              onPress={() => goToLogin("medico")}
+              onPress={() => goToLogin('medico')}
             >
               <Text style={styles.buttonTextWhite}>Médico</Text>
             </Pressable>
 
             <Pressable
               style={[styles.button, styles.buttonWhite]}
-              onPress={() => goToLogin("paciente")}
+              onPress={() => goToLogin('paciente')}
             >
               <Text style={styles.buttonTextOrange}>Paciente</Text>
             </Pressable>
@@ -125,7 +127,7 @@ export default function IndexScreen() {
 
           <View style={styles.splashContent}>
             <Image
-              source={require("../components/VytaLogo.png")}
+              source={require('../components/VytaLogo.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
   },
   fullScreen: {
-    position: "absolute",
+    position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
@@ -155,8 +157,8 @@ const styles = StyleSheet.create({
   },
   splashContent: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
     width: 70,
@@ -165,18 +167,18 @@ const styles = StyleSheet.create({
   },
   brand: {
     fontSize: 32,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.orange,
   },
   slogan: {
     fontSize: 13,
-    color: "#333333",
+    color: '#333333',
     marginTop: 2,
   },
   top: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bottomCard: {
     backgroundColor: COLORS.teal,
@@ -185,23 +187,23 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 56,
     paddingHorizontal: 32,
-    alignItems: "center",
+    alignItems: 'center',
   },
   welcomeTitle: {
     fontSize: 26,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.white,
     marginBottom: 6,
   },
   welcomeSubtitle: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: '600',
     color: COLORS.white,
     marginBottom: 28,
-    textAlign: "center",
+    textAlign: 'center',
   },
   buttonsRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
   },
   button: {
@@ -217,12 +219,12 @@ const styles = StyleSheet.create({
   },
   buttonTextWhite: {
     color: COLORS.white,
-    fontWeight: "700",
+    fontWeight: '700',
     fontSize: 15,
   },
   buttonTextOrange: {
     color: COLORS.orange,
-    fontWeight: "700",
+    fontWeight: '700',
     fontSize: 15,
   },
 });

@@ -1,60 +1,65 @@
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from 'react';
 import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
+  View,
   Text,
   TextInput,
-  View,
-} from "react-native";
+  Pressable,
+  StyleSheet,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
-  teal: "#007C94",
-  orange: "#FF7A59",
-  white: "#FFFFFF",
-  gray: "#9AA0A6",
-  border: "#D9D9D9",
+  teal: '#007C94',
+  orange: '#FF7A59',
+  white: '#FFFFFF',
+  gray: '#9AA0A6',
+  border: '#D9D9D9',
 };
 
 export default function CadastroScreen() {
   const { role } = useLocalSearchParams<{ role?: string }>();
   const router = useRouter();
 
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [dataNascimento, setDataNascimento] = useState("");
-  const [senha, setSenha] = useState("");
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [cpf, setCpf] = useState('');
+  const [dataNascimento, setDataNascimento] = useState('');
+  const [senha, setSenha] = useState('');
   const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const handleCadastrar = () => {
     // TODO: chamar a API de cadastro, passando nome, email, cpf, dataNascimento, senha e role
-    console.log("Cadastro", { role, nome, email, cpf, dataNascimento, senha });
+    console.log('Cadastro', { role, nome, email, cpf, dataNascimento, senha });
 
     // Por enquanto, navega direto para a Home do paciente.
     // Quando o backend estiver pronto, faça essa navegação só depois
     // de confirmar que o cadastro deu certo.
-    router.replace("/home");
+    router.replace('/home');
   };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: insets.top, paddingBottom: insets.bottom + 32 },
+        ]}
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo + título */}
         <View style={styles.header}>
           <Image
-            source={require("../components/VytaLogo.png")}
+            source={require('../components/VytaLogo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -114,7 +119,7 @@ export default function CadastroScreen() {
               hitSlop={10}
             >
               <MaterialCommunityIcons
-                name={senhaVisivel ? "eye-off-outline" : "eye-outline"}
+                name={senhaVisivel ? 'eye-off-outline' : 'eye-outline'}
                 size={22}
                 color={COLORS.gray}
               />
@@ -132,7 +137,7 @@ export default function CadastroScreen() {
             <Text style={styles.loginText}>Já tem uma conta? </Text>
             <Pressable
               onPress={() =>
-                router.push({ pathname: "/login", params: { role } })
+                router.push({ pathname: '/login', params: { role } })
               }
             >
               <Text style={styles.loginLink}>Fazer login</Text>
@@ -151,11 +156,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
     paddingBottom: 32,
   },
   header: {
-    alignItems: "center",
+    alignItems: 'center',
     marginTop: 70,
   },
   logo: {
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: '700',
     color: COLORS.orange,
   },
   form: {
@@ -179,12 +184,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     fontSize: 15,
-    color: "#333333",
+    color: '#333333',
     marginBottom: 16,
   },
   passwordWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 24,
@@ -194,7 +199,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#333333",
+    color: '#333333',
   },
   eyeButton: {
     padding: 4,
@@ -207,25 +212,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.teal,
     borderRadius: 28,
     paddingVertical: 16,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 20,
   },
   submitButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: '700',
   },
   loginRow: {
-    flexDirection: "row",
-    justifyContent: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   loginText: {
-    color: "#333333",
+    color: '#333333',
     fontSize: 13,
   },
   loginLink: {
     color: COLORS.teal,
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: '700',
   },
 });
