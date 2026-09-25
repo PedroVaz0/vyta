@@ -34,10 +34,14 @@ export default function LoginScreen() {
     // TODO: chamar a API de autenticação, passando cpf, senha e role
     console.log('Login', { role, cpf, senha });
 
-    // Por enquanto, navega direto para a Home do paciente.
+    // Por enquanto, navega direto para a Home do perfil escolhido.
     // Quando o backend estiver pronto, faça essa navegação só depois
     // de confirmar que o login deu certo.
-    router.replace('/home');
+    if (role === 'medico') {
+      router.replace('/agenda');
+    } else {
+      router.replace('/home');
+    }
   };
 
   return (

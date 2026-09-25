@@ -38,10 +38,14 @@ export default function CadastroScreen() {
     // TODO: chamar a API de cadastro, passando nome, email, cpf, dataNascimento, senha e role
     console.log('Cadastro', { role, nome, email, cpf, dataNascimento, senha });
 
-    // Por enquanto, navega direto para a Home do paciente.
+    // Por enquanto, navega direto para a Home do perfil escolhido.
     // Quando o backend estiver pronto, faça essa navegação só depois
     // de confirmar que o cadastro deu certo.
-    router.replace('/home');
+    if (role === 'medico') {
+      router.replace('/agenda');
+    } else {
+      router.replace('/home');
+    }
   };
 
   return (

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { Share } from 'react-native';
 
 const COLORS = {
   teal: '#007C94',
@@ -52,6 +54,22 @@ const laudos = [
 export default function PacienteHomeScreen() {
   const nomePaciente = 'Maperi Julu'; // troque pelo nome vindo do usuário logado
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  const handleCompartilharLaudo = async (titulo: string, data: string) => {
+    try {
+      await Share.share({
+        message: `${titulo} — ${data}`,
+      });
+    } catch (e) {
+      console.log('Erro ao compartilhar', e);
+    }
+  };
+
+  const handleBaixarLaudo = (titulo: string) => {
+    // TODO: quando o backend tiver a URL real do arquivo, baixe/abra aqui.
+    console.log('Baixar laudo', titulo);
+  };
 
   return (
     <ScrollView
@@ -73,7 +91,10 @@ export default function PacienteHomeScreen() {
           <Text style={styles.brandText}>vyta</Text>
         </View>
 
-        <Pressable style={styles.bellButton}>
+        <Pressable
+          style={styles.bellButton}
+          onPress={() => router.push('/notificacoes')}
+        >
           <Feather name="bell" size={24} color={COLORS.teal} />
         </Pressable>
       </View>
@@ -83,7 +104,10 @@ export default function PacienteHomeScreen() {
       <Text style={styles.subGreeting}>Como está se sentindo hoje?</Text>
 
       {/* Próxima consulta */}
-      <Pressable style={styles.consultaCard}>
+      <Pressable
+        style={styles.consultaCard}
+        onPress={() => router.push('/consultas')}
+      >
         <View style={styles.consultaIconCircle}>
           <Feather name="calendar" size={18} color={COLORS.teal} />
         </View>
@@ -103,7 +127,10 @@ export default function PacienteHomeScreen() {
 
       {/* Atalhos */}
       <View style={styles.shortcutsRow}>
-        <Pressable style={styles.shortcutCard}>
+        <Pressable
+          style={styles.shortcutCard}
+          onPress={() => router.push('/historico-clinico')}
+        >
           <Feather name="file-text" size={20} color={COLORS.orange} />
           <View style={styles.shortcutLabelRow}>
             <Text style={styles.shortcutText}>Histórico Clínico</Text>
@@ -111,7 +138,10 @@ export default function PacienteHomeScreen() {
           </View>
         </Pressable>
 
-        <Pressable style={[styles.shortcutCard, styles.shortcutCardSelected]}>
+        <Pressable
+          style={[styles.shortcutCard, styles.shortcutCardSelected]}
+          onPress={() => router.push('/consultas')}
+        >
           <Feather name="message-square" size={20} color={COLORS.orange} />
           <View style={styles.shortcutLabelRow}>
             <Text style={[styles.shortcutText, styles.shortcutTextSelected]}>
@@ -122,10 +152,20 @@ export default function PacienteHomeScreen() {
       </View>
 
       {/* Início e Laudos */}
-      <Text style={styles.sectionTitle}>Início e Laudos</Text>
+      <Pressable
+        style={styles.sectionTitleRow}
+        onPress={() => router.push('/laudos')}
+      >
+        <Text style={styles.sectionTitle}>Início e Laudos</Text>
+        <Feather name="chevron-right" size={18} color={COLORS.teal} />
+      </Pressable>
 
       {laudos.map((laudo) => (
-        <View key={laudo.id} style={styles.laudoCard}>
+        <Pressable
+          key={laudo.id}
+          style={styles.laudoCard}
+          onPress={() => router.push('/laudos')}
+        >
           <View style={styles.laudoIconCircle}>
             <Feather name="file-text" size={18} color={COLORS.white} />
           </View>
@@ -137,14 +177,28 @@ export default function PacienteHomeScreen() {
           </View>
 
           <View style={styles.laudoActions}>
-            <Pressable hitSlop={8} style={styles.laudoActionButton}>
+            <Pressable
+              hitSlop={8}
+              style={styles.laudoActionButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleBaixarLaudo(laudo.titulo);
+              }}
+            >
               <Feather name="download" size={18} color={COLORS.teal} />
             </Pressable>
-            <Pressable hitSlop={8} style={styles.laudoActionButton}>
+            <Pressable
+              hitSlop={8}
+              style={styles.laudoActionButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleCompartilharLaudo(laudo.titulo, laudo.data);
+              }}
+            >
               <Feather name="share-2" size={18} color={COLORS.orange} />
             </Pressable>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
@@ -276,11 +330,16 @@ const styles = StyleSheet.create({
   shortcutTextSelected: {
     color: COLORS.tealLight,
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.textDark,
-    marginBottom: 14,
   },
   laudoCard: {
     backgroundColor: COLORS.cardBg,

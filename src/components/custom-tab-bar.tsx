@@ -1,5 +1,6 @@
+import React from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
@@ -8,16 +9,15 @@ const COLORS = {
   white: '#FFFFFF',
 };
 
-// Ícone (Feather) para cada rota do menu
-const ICONS: Record<string, keyof typeof Feather.glyphMap> = {
+// Configuração padrão (usada pelo paciente)
+const ICONS_PADRAO: Record<string, keyof typeof Feather.glyphMap> = {
   home: 'home',
   consultas: 'calendar',
   laudos: 'file-text',
   perfil: 'user',
 };
 
-// Rótulo exibido para cada rota do menu
-const LABELS: Record<string, string> = {
+const LABELS_PADRAO: Record<string, string> = {
   home: 'Início',
   consultas: 'Consultas',
   laudos: 'Laudos',
@@ -27,17 +27,24 @@ const LABELS: Record<string, string> = {
 type CustomTabBarProps = {
   state: any;
   navigation: any;
+  icons?: Record<string, keyof typeof Feather.glyphMap>;
+  labels?: Record<string, string>;
 };
 
-export default function CustomTabBar({ state, navigation }: CustomTabBarProps) {
+export default function CustomTabBar({
+  state,
+  navigation,
+  icons = ICONS_PADRAO,
+  labels = LABELS_PADRAO,
+}: CustomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 10 }]}>
       {state.routes.map((route: any, index: number) => {
         const isFocused = state.index === index;
-        const iconName = ICONS[route.name] ?? 'circle';
-        const label = LABELS[route.name] ?? route.name;
+        const iconName = icons[route.name] ?? 'circle';
+        const label = labels[route.name] ?? route.name;
         const color = isFocused ? COLORS.orange : COLORS.white;
 
         const onPress = () => {
