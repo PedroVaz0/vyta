@@ -1,39 +1,56 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Image,
-} from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const COLORS = {
-  teal: '#007C94',
-  orange: '#FF7A59',
-  white: '#FFFFFF',
-  textDark: '#1A1A1A',
-  textGray: '#6B6B6B',
-  cardBg: '#E9F6FA',
-  danger: '#E03131',
+  teal: "#007C94",
+  orange: "#FF7A59",
+  white: "#FFFFFF",
+  textDark: "#1A1A1A",
+  textGray: "#6B6B6B",
+  cardBg: "#E9F6FA",
+  danger: "#E03131",
 };
 
 // Dados de exemplo — troque pelos dados reais do usuário logado quando o backend estiver pronto.
 const usuario = {
-  nome: 'Maperi Julu',
-  email: 'maperi.julu@email.com',
-  cpf: '123.456.789-00',
+  nome: "Maperi Julu",
+  email: "maperi.julu@email.com",
+  cpf: "123.456.789-00",
 };
 
 const opcoes = [
-  { id: 'editar', label: 'Editar Perfil', icon: 'user' as const },
-  { id: 'notificacoes', label: 'Notificações', icon: 'bell' as const },
-  { id: 'privacidade', label: 'Privacidade e Segurança', icon: 'lock' as const },
-  { id: 'ajuda', label: 'Ajuda e Suporte', icon: 'help-circle' as const },
-  { id: 'sobre', label: 'Sobre o Vyta', icon: 'info' as const },
+  {
+    id: "editar",
+    label: "Editar Perfil",
+    icon: "user" as const,
+    route: "/editar-perfil",
+  },
+  {
+    id: "notificacoes",
+    label: "Notificações",
+    icon: "bell" as const,
+    route: "/notificacoes",
+  },
+  {
+    id: "privacidade",
+    label: "Privacidade e Segurança",
+    icon: "lock" as const,
+    route: "/privacidade",
+  },
+  {
+    id: "ajuda",
+    label: "Ajuda e Suporte",
+    icon: "help-circle" as const,
+    route: "/ajuda",
+  },
+  {
+    id: "sobre",
+    label: "Sobre o Vyta",
+    icon: "info" as const,
+    route: "/sobre",
+  },
 ];
 
 export default function PerfilScreen() {
@@ -43,7 +60,7 @@ export default function PerfilScreen() {
   const handleSair = () => {
     // TODO: quando o login real existir, limpe aqui o token/sessão guardados
     // antes de voltar para a tela inicial.
-    router.replace('/');
+    router.replace("/");
   };
 
   return (
@@ -76,7 +93,11 @@ export default function PerfilScreen() {
       {/* Lista de opções */}
       <View style={styles.optionsList}>
         {opcoes.map((opcao) => (
-          <Pressable key={opcao.id} style={styles.optionRow}>
+          <Pressable
+            key={opcao.id}
+            style={styles.optionRow}
+            onPress={() => router.push(opcao.route as any)}
+          >
             <View style={styles.optionIconCircle}>
               <Feather name={opcao.icon} size={18} color={COLORS.teal} />
             </View>
@@ -107,12 +128,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.textDark,
     marginBottom: 20,
   },
   profileCard: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: COLORS.cardBg,
     borderRadius: 20,
     paddingVertical: 24,
@@ -123,13 +144,13 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     backgroundColor: COLORS.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 12,
   },
   nome: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.textDark,
     marginBottom: 2,
   },
@@ -139,8 +160,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cpfRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   cpf: {
@@ -151,31 +172,31 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: "#F0F0F0",
   },
   optionIconCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
     backgroundColor: COLORS.cardBg,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 14,
   },
   optionLabel: {
     flex: 1,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textDark,
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingVertical: 14,
     borderRadius: 16,
@@ -185,6 +206,6 @@ const styles = StyleSheet.create({
   logoutText: {
     color: COLORS.danger,
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });
