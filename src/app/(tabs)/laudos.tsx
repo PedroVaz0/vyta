@@ -1,6 +1,8 @@
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Laudo, LAUDOS } from '../../data/laudos';
 
 const COLORS = {
   teal: '#007C94',
@@ -11,52 +13,22 @@ const COLORS = {
   cardBg: '#E9F6FA',
 };
 
-type Laudo = {
-  id: string;
-  titulo: string;
-  laboratorio: string;
-  data: string;
-};
-
-// Dados de exemplo — troque pelos dados reais vindos da API quando estiver pronta.
-const LAUDOS: Laudo[] = [
-  {
-    id: '1',
-    titulo: 'Hemograma Completo',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '21/08/2026',
-  },
-  {
-    id: '2',
-    titulo: 'Raio-X do Tórax',
-    laboratorio: 'Clínica Bem Estar',
-    data: '17/06/2026',
-  },
-  {
-    id: '3',
-    titulo: 'Exame de Urina Tipo I',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '02/03/2026',
-  },
-  {
-    id: '4',
-    titulo: 'Glicemia em Jejum',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '15/01/2026',
-  },
-];
-
 export default function LaudosScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const handleBaixar = (titulo: string) => {
-    // TODO: quando o backend tiver a URL real do arquivo, baixe/abra aqui.
-    console.log('Baixar laudo', titulo);
+  const abrirLaudo = (laudo: Laudo) => {
+    router.push({ pathname: '/laudo-detalhe', params: { id: laudo.id } } as any);
   };
 
-  const handleCompartilhar = async (titulo: string, data: string) => {
+  const handleBaixar = (laudo: Laudo) => {
+    // TODO: quando o backend tiver a URL real do arquivo, baixe/abra aqui.
+    console.log('Baixar laudo', laudo.titulo);
+  };
+
+  const handleCompartilhar = async (laudo: Laudo) => {
     try {
-      await Share.share({ message: `${titulo} — ${data}` });
+      await Share.share({ message: `${laudo.titulo} — ${laudo.data}` });
     } catch (e) {
       console.log('Erro ao compartilhar', e);
     }
@@ -71,7 +43,11 @@ export default function LaudosScreen() {
         showsVerticalScrollIndicator={false}
       >
         {LAUDOS.map((laudo) => (
-          <View key={laudo.id} style={styles.laudoCard}>
+          <Pressable
+            key={laudo.id}
+            onPress={() => abrirLaudo(laudo)}
+            style={({ pressed }) => [styles.laudoCard, pressed && styles.laudoCardPressed]}
+          >
             <View style={styles.laudoIconCircle}>
               <Feather name="file-text" size={18} color={COLORS.white} />
             </View>
@@ -86,19 +62,19 @@ export default function LaudosScreen() {
               <Pressable
                 hitSlop={8}
                 style={styles.laudoActionButton}
-                onPress={() => handleBaixar(laudo.titulo)}
+                onPress={() => handleBaixar(laudo)}
               >
                 <Feather name="download" size={18} color={COLORS.teal} />
               </Pressable>
               <Pressable
                 hitSlop={8}
                 style={styles.laudoActionButton}
-                onPress={() => handleCompartilhar(laudo.titulo, laudo.data)}
+                onPress={() => handleCompartilhar(laudo)}
               >
                 <Feather name="share-2" size={18} color={COLORS.orange} />
               </Pressable>
             </View>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
     </View>
@@ -106,17 +82,8 @@ export default function LaudosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 20,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.textDark,
-    marginBottom: 20,
-  },
+  container: { flex: 1, backgroundColor: COLORS.white, paddingHorizontal: 20 },
+  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.textDark, marginBottom: 20 },
   laudoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -125,6 +92,7 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 14,
   },
+  laudoCardPressed: { opacity: 0.85 },
   laudoIconCircle: {
     width: 40,
     height: 40,
@@ -134,29 +102,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  laudoTextWrapper: {
-    flex: 1,
-  },
-  laudoTitulo: {
-    color: COLORS.textDark,
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  laudoLaboratorio: {
-    color: COLORS.textGray,
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  laudoData: {
-    color: COLORS.textGray,
-    fontSize: 12,
-  },
-  laudoActions: {
-    alignItems: 'center',
-    gap: 10,
-  },
-  laudoActionButton: {
-    padding: 2,
-  },
+  laudoTextWrapper: { flex: 1 },
+  laudoTitulo: { color: COLORS.textDark, fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  laudoLaboratorio: { color: COLORS.textGray, fontSize: 12, marginBottom: 4 },
+  laudoData: { color: COLORS.textGray, fontSize: 12 },
+  laudoActions: { alignItems: 'center', gap: 10 },
+  laudoActionButton: { padding: 2 },
 });

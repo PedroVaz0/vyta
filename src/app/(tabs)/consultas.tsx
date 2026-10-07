@@ -46,6 +46,13 @@ export default function ConsultasScreen() {
 
     const totalAgendadas = CONSULTAS.filter((c) => c.status === "agendada").length;
 
+    const abrirConsulta = (id: string | number) => {
+        router.push({
+            pathname: "/consulta-detalhe",
+            params: { id: String(id) },
+        } as any);
+    };
+
     const badgeStyle = (status: StatusConsulta) => {
         switch (status) {
             case "agendada":
@@ -119,7 +126,11 @@ export default function ConsultasScreen() {
                     consultasFiltradas.map((consulta) => {
                         const badge = badgeStyle(consulta.status);
                         return (
-                            <View key={consulta.id} style={styles.consultaCard}>
+                            <Pressable
+                                key={consulta.id}
+                                onPress={() => abrirConsulta(consulta.id)}
+                                style={({ pressed }) => [styles.consultaCard, pressed && styles.consultaCardPressed]}
+                            >
                                 <View style={styles.consultaTopRow}>
                                     <View style={styles.consultaIconCircle}>
                                         <Feather name="calendar" size={18} color={COLORS.white} />
@@ -157,7 +168,7 @@ export default function ConsultasScreen() {
                                         </View>
                                     )}
                                 </View>
-                            </View>
+                            </Pressable>
                         );
                     })
                 )}
@@ -234,6 +245,9 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 14,
         marginBottom: 14,
+    },
+    consultaCardPressed: {
+        opacity: 0.85,
     },
     consultaTopRow: {
         flexDirection: "row",
