@@ -34,22 +34,10 @@ const opcoes = [
     route: "/notificacoes",
   },
   {
-    id: "privacidade",
-    label: "Privacidade e Segurança",
-    icon: "lock" as const,
-    route: "/privacidade",
-  },
-  {
     id: "ajuda",
     label: "Ajuda e Suporte",
     icon: "help-circle" as const,
     route: "/ajuda",
-  },
-  {
-    id: "sobre",
-    label: "Sobre o Vyta",
-    icon: "info" as const,
-    route: "/sobre",
   },
 ];
 

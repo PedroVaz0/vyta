@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { getPacientes } from '../../data/medico';
 
 const COLORS = {
   teal: '#007C94',
@@ -10,105 +12,87 @@ const COLORS = {
   textDark: '#1A1A1A',
   textGray: '#6B6B6B',
   cardBg: '#E9F6FA',
-  border: '#D9D9D9',
 };
 
-type Paciente = {
-  id: string;
-  nome: string;
-  idade: number;
-  ultimaConsulta: string;
-};
-
-// Dados de exemplo — troque pelos dados reais vindos da API quando estiver pronta.
-const PACIENTES: Paciente[] = [
-  { id: '1', nome: 'Maperi Julu', idade: 34, ultimaConsulta: '21/08/2026' },
-  { id: '2', nome: 'João Pedro Alves', idade: 52, ultimaConsulta: '18/09/2026' },
-  { id: '3', nome: 'Fernanda Costa', idade: 27, ultimaConsulta: '10/09/2026' },
-  { id: '4', nome: 'Ricardo Mendes', idade: 61, ultimaConsulta: '02/09/2026' },
-  { id: '5', nome: 'Beatriz Nogueira', idade: 45, ultimaConsulta: '25/08/2026' },
-  { id: '6', nome: 'Carlos Eduardo', idade: 39, ultimaConsulta: '19/08/2026' },
-];
-
-function getIniciais(nome: string) {
+function iniciais(nome: string) {
   const partes = nome.trim().split(' ');
   const primeira = partes[0]?.[0] ?? '';
   const ultima = partes.length > 1 ? partes[partes.length - 1][0] : '';
   return (primeira + ultima).toUpperCase();
 }
 
-export default function PacientesScreen() {
+export default function PacientesMedicoScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [busca, setBusca] = useState('');
 
-  const pacientesFiltrados = useMemo(() => {
-    return PACIENTES.filter((p) =>
-      p.nome.toLowerCase().includes(busca.trim().toLowerCase())
-    );
+  const pacientes = useMemo(() => {
+    const termo = busca.trim().toLowerCase();
+    return getPacientes().filter((p) => p.nome.toLowerCase().includes(termo));
   }, [busca]);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      {/* Cabeçalho */}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 },
+      ]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.headerTitle}>Pacientes</Text>
-      <Text style={styles.headerSubtitle}>
-        {PACIENTES.length} paciente{PACIENTES.length !== 1 ? 's' : ''} sob seu
-        cuidado
-      </Text>
 
       {/* Busca */}
-      <View style={styles.searchWrapper}>
+      <View style={styles.searchBox}>
         <Feather name="search" size={18} color={COLORS.textGray} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Buscar paciente..."
+          placeholder="Buscar paciente pelo nome"
           placeholderTextColor={COLORS.textGray}
           value={busca}
           onChangeText={setBusca}
+          autoCorrect={false}
         />
         {busca.length > 0 && (
-          <Pressable onPress={() => setBusca('')} hitSlop={8}>
+          <Pressable hitSlop={8} onPress={() => setBusca('')}>
             <Feather name="x" size={18} color={COLORS.textGray} />
           </Pressable>
         )}
       </View>
 
-      {/* Lista de pacientes */}
-      <ScrollView
-        style={styles.list}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {pacientesFiltrados.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Feather name="users" size={36} color={COLORS.textGray} />
-            <Text style={styles.emptyStateText}>
-              Nenhum paciente encontrado para essa busca.
-            </Text>
+      <Text style={styles.sectionTitle}>
+        {pacientes.length} {pacientes.length === 1 ? 'paciente' : 'pacientes'}
+      </Text>
+
+      {pacientes.length === 0 && (
+        <Text style={styles.emptyText}>Nenhum paciente encontrado com esse nome.</Text>
+      )}
+
+      {pacientes.map((paciente) => (
+        <Pressable
+          key={paciente.id}
+          style={styles.pacienteCard}
+          onPress={() =>
+            router.push({ pathname: '/medico-paciente', params: { id: paciente.id } })
+          }
+        >
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{iniciais(paciente.nome)}</Text>
           </View>
-        ) : (
-          pacientesFiltrados.map((paciente) => (
-            <Pressable key={paciente.id} style={styles.pacienteCard}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>
-                  {getIniciais(paciente.nome)}
-                </Text>
-              </View>
 
-              <View style={styles.pacienteTextWrapper}>
-                <Text style={styles.pacienteNome}>{paciente.nome}</Text>
-                <Text style={styles.pacienteInfo}>
-                  {paciente.idade} anos · Última consulta:{' '}
-                  {paciente.ultimaConsulta}
-                </Text>
-              </View>
+          <View style={styles.textWrapper}>
+            <Text style={styles.nome}>{paciente.nome}</Text>
+            <Text style={styles.info}>{paciente.idade} anos</Text>
+            <Text style={styles.info}>Última consulta: {paciente.ultimaConsulta}</Text>
+          </View>
 
-              <Feather name="chevron-right" size={20} color={COLORS.textGray} />
-            </Pressable>
-          ))
-        )}
-      </ScrollView>
-    </View>
+          <View style={styles.arrowCircle}>
+            <Feather name="chevron-right" size={18} color={COLORS.teal} />
+          </View>
+        </Pressable>
+      ))}
+    </ScrollView>
   );
 }
 
@@ -116,82 +100,84 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+  content: {
     paddingHorizontal: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
     color: COLORS.textDark,
-    marginBottom: 2,
+    marginBottom: 20,
   },
-  headerSubtitle: {
-    fontSize: 13,
-    color: COLORS.textGray,
-    marginBottom: 16,
-  },
-  searchWrapper: {
+  searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
     gap: 10,
-    marginBottom: 16,
+    backgroundColor: COLORS.cardBg,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 24,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     color: COLORS.textDark,
+    padding: 0,
   },
-  list: {
-    flex: 1,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textDark,
+    marginBottom: 14,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.textGray,
   },
   pacienteCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: COLORS.cardBg,
     borderRadius: 16,
     padding: 14,
-    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
   },
-  avatarCircle: {
+  avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: COLORS.teal,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   avatarText: {
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
   },
-  pacienteTextWrapper: {
+  textWrapper: {
     flex: 1,
   },
-  pacienteNome: {
+  nome: {
+    color: COLORS.textDark,
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textDark,
     marginBottom: 2,
   },
-  pacienteInfo: {
-    fontSize: 12,
+  info: {
     color: COLORS.textGray,
+    fontSize: 12,
   },
-  emptyState: {
+  arrowCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
-    gap: 12,
-  },
-  emptyStateText: {
-    color: COLORS.textGray,
-    fontSize: 14,
-    textAlign: 'center',
+    marginLeft: 8,
   },
 });
