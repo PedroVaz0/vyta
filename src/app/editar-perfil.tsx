@@ -27,7 +27,7 @@ const COLORS = {
 
 type IconName = React.ComponentProps<typeof Feather>['name'];
 
-// Dados de exemplo — troque pelos dados reais do usuário logado.
+// trocar pelos dados reais do usuário logado.
 const usuarioInicial = {
   nome: 'Maperi Julu',
   email: 'maperi.julu@email.com',
@@ -99,14 +99,14 @@ export default function EditarPerfilScreen() {
   const [nascimento, setNascimento] = useState(usuarioInicial.nascimento);
 
   const handleSalvar = () => {
-    // TODO: enviar os dados atualizados para a API.
+    // enviar os dados atualizados para o backend.
     Alert.alert('Perfil atualizado', 'Suas informações foram salvas.', [
       { text: 'OK', onPress: () => router.back() },
     ]);
   };
 
   const handleAlterarFoto = () => {
-    // TODO: abrir o seletor de imagem (expo-image-picker).
+    
     console.log('Alterar foto');
   };
 

@@ -57,7 +57,7 @@ export default function IndexScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Tela de boas-vindas (fica embaixo, vai aparecendo com o fade) */}
+      {/* Tela de boas-vindas*/}
       <Animated.View
         style={[styles.fullScreen, { opacity: welcomeOpacity }]}
         pointerEvents={showSplash ? 'none' : 'auto'}
@@ -96,7 +96,6 @@ export default function IndexScreen() {
         </View>
       </Animated.View>
 
-      {/* Splash (fica por cima, some com o fade) */}
       {showSplash && (
         <Animated.View
           style={[styles.fullScreen, styles.splash, { opacity: splashOpacity }]}

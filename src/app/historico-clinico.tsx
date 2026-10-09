@@ -20,7 +20,7 @@ type Evento = {
   icone: keyof typeof Feather.glyphMap;
 };
 
-// Dados de exemplo — troque pelos dados reais vindos da API quando estiver pronta.
+// Trocar pelos dados reais vindos da API quando estiver pronta.
 const EVENTOS: Evento[] = [
   {
     id: '1',

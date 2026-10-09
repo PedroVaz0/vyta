@@ -14,7 +14,7 @@ const COLORS = {
   danger: '#E03131',
 };
 
-// Dados de exemplo — troque pelos dados reais do médico logado quando o backend estiver pronto.
+//  Preciso trocar pelos dados reais do médico logado quando o backend estiver pronto.
 const medico = {
   nome: 'Dr. Riquelme Santos',
   especialidade: 'Clínico Geral',
@@ -26,7 +26,6 @@ const opcoes = [
   { id: 'editar', label: 'Editar Perfil', icon: 'user' as const },
   { id: 'horarios', label: 'Horários de Atendimento', icon: 'clock' as const },
   { id: 'notificacoes', label: 'Notificações', icon: 'bell' as const },
-  { id: 'privacidade', label: 'Privacidade e Segurança', icon: 'lock' as const },
   { id: 'ajuda', label: 'Ajuda e Suporte', icon: 'help-circle' as const },
 ];
 
@@ -35,7 +34,7 @@ export default function PerfilMedicoScreen() {
   const insets = useSafeAreaInsets();
 
   const handleSair = () => {
-    // TODO: quando o login real existir, limpe aqui o token/sessão guardados
+    // quando o login real existir, limpar a autenticação do usuário
     router.replace('/');
   };
 
@@ -50,7 +49,7 @@ export default function PerfilMedicoScreen() {
     >
       <Text style={styles.headerTitle}>Perfil</Text>
 
-      {/* Avatar + informações */}
+      {/* Informações */}
       <View style={styles.profileCard}>
         <View style={styles.avatarCircle}>
           <Feather name="user" size={32} color={COLORS.white} />

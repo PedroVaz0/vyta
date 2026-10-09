@@ -35,12 +35,10 @@ export default function CadastroScreen() {
   const insets = useSafeAreaInsets();
 
   const handleCadastrar = () => {
-    // TODO: chamar a API de cadastro, passando nome, email, cpf, dataNascimento, senha e role
+    // chamar a o backend de cadastro, passando nome, email, cpf, dataNascimento, senha
     console.log('Cadastro', { role, nome, email, cpf, dataNascimento, senha });
 
-    // Por enquanto, navega direto para a Home do perfil escolhido.
-    // Quando o backend estiver pronto, faça essa navegação só depois
-    // de confirmar que o cadastro deu certo.
+
     if (role === 'medico') {
       router.replace('/agenda');
     } else {

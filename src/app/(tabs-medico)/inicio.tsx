@@ -23,7 +23,6 @@ export default function MedicoHomeScreen() {
   const router = useRouter();
   const [consultas, setConsultas] = useState<Consulta[]>([]);
 
-  // Recarrega sempre que a tela volta ao foco (ex.: depois de editar uma consulta)
   useFocusEffect(
     useCallback(() => {
       setConsultas([...getConsultas()]);
@@ -96,7 +95,7 @@ export default function MedicoHomeScreen() {
         </Pressable>
       </View>
 
-      {/* Saudação */}
+      {/* Ola */}
       <Text style={styles.greeting}>Olá, {medico.nome}</Text>
       <Text style={styles.subGreeting}>
         {consultasHoje.length === 0

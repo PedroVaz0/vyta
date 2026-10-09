@@ -15,9 +15,7 @@ const COLORS = {
   danger: '#E03131',
 };
 
-type IconName = React.ComponentProps<typeof Feather>['name'];
-
-// Troque pelos contatos reais do suporte do Vyta.
+type IconName = React.ComponentProps<typeof Feather>['name']
 const SUPORTE = {
   whatsapp: '5512999999999',
   email: 'suporte@vyta.com.br',

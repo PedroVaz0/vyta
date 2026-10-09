@@ -62,7 +62,7 @@ export default function ConsultaDetalheScreen() {
   const cores = STATUS_COLORS[consulta.status];
 
   const handleReagendar = () => {
-    // TODO: levar para a tela de edição/reagendamento quando ela existir.
+    
     router.push('/nova-consulta');
   };
 
@@ -76,8 +76,6 @@ export default function ConsultaDetalheScreen() {
           text: 'Cancelar consulta',
           style: 'destructive',
           onPress: () => {
-            // TODO: chamar aqui a função do store que cancela a consulta
-            // e depois voltar para a lista com router.back().
             console.log('Cancelar consulta', consulta.id);
           },
         },

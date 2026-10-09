@@ -80,7 +80,7 @@ export default function NotificacoesConfigScreen() {
   });
 
   const alternar = (id: string) => {
-    // TODO: salvar a preferência na API.
+  
     setAtivas((atual) => ({ ...atual, [id]: !atual[id] }));
   };
 

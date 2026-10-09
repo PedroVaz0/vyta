@@ -13,7 +13,7 @@ const COLORS = {
   danger: "#E03131",
 };
 
-// Dados de exemplo — troque pelos dados reais do usuário logado quando o backend estiver pronto.
+// trocar pelos dados reais do usuário logado quando o backend estiver pronto.
 const usuario = {
   nome: "Maperi Julu",
   email: "maperi.julu@email.com",
@@ -46,7 +46,7 @@ export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
 
   const handleSair = () => {
-    // TODO: quando o login real existir, limpe aqui o token/sessão guardados
+    // quando o login real existir, limpar o token
     // antes de voltar para a tela inicial.
     router.replace("/");
   };
@@ -63,7 +63,7 @@ export default function PerfilScreen() {
       {/* Cabeçalho */}
       <Text style={styles.headerTitle}>Perfil</Text>
 
-      {/* Avatar + nome */}
+      {/*  nome */}
       <View style={styles.profileCard}>
         <View style={styles.avatarCircle}>
           <Feather name="user" size={32} color={COLORS.white} />

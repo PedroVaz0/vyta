@@ -9,7 +9,7 @@ const COLORS = {
   white: '#FFFFFF',
 };
 
-// Configuração padrão (usada pelo paciente)
+// Configuração padrão 
 const ICONS_PADRAO: Record<string, keyof typeof Feather.glyphMap> = {
   home: 'home',
   consultas: 'calendar',

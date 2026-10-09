@@ -28,7 +28,7 @@ const COLORS = {
 
 const STATUS_OPCOES: StatusConsulta[] = ['aberta', 'confirmada', 'concluida'];
 
-// Máscaras simples para digitação
+// Máscaras  para digitação
 const mascaraData = (v: string) => {
   const n = v.replace(/\D/g, '').slice(0, 8);
   if (n.length <= 2) return n;
@@ -78,7 +78,7 @@ export default function MedicoEditarConsultaScreen() {
         text: 'Cancelar consulta',
         style: 'destructive',
         onPress: () => {
-          // TODO: quando houver backend, remova/cancele a consulta pela API.
+          
           router.back();
         },
       },

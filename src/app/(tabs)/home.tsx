@@ -23,7 +23,7 @@ const COLORS = {
   danger: '#E03131',
 };
 
-// Dados de exemplo — troque pelos dados reais vindos da API quando estiver pronta.
+// Preciso trocar pelos dados reais do backend quando estiver pronto.
 const proximaConsulta = {
   data: '05 de novembro - 14:00',
   clinica: 'Clínica Bem estar',
@@ -52,7 +52,7 @@ const laudos = [
 ];
 
 export default function PacienteHomeScreen() {
-  const nomePaciente = 'Maperi Julu'; // troque pelo nome vindo do usuário logado
+  const nomePaciente = 'Maperi Julu'; 
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -67,7 +67,7 @@ export default function PacienteHomeScreen() {
   };
 
   const handleBaixarLaudo = (titulo: string) => {
-    // TODO: quando o backend tiver a URL real do arquivo, baixe/abra aqui.
+  
     console.log('Baixar laudo', titulo);
   };
 
@@ -99,7 +99,7 @@ export default function PacienteHomeScreen() {
         </Pressable>
       </View>
 
-      {/* Saudação */}
+      {/* Ola */}
       <Text style={styles.greeting}>Olá, {nomePaciente}</Text>
       <Text style={styles.subGreeting}>Como está se sentindo hoje?</Text>
 

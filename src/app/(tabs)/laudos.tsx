@@ -22,7 +22,7 @@ export default function LaudosScreen() {
   };
 
   const handleBaixar = (laudo: Laudo) => {
-    // TODO: quando o backend tiver a URL real do arquivo, baixe/abra aqui.
+    // Torcar quando o backend tiver a URL
     console.log('Baixar laudo', laudo.titulo);
   };
 

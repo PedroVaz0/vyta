@@ -22,7 +22,7 @@ type Notificacao = {
   icone: keyof typeof Feather.glyphMap;
 };
 
-// Dados de exemplo — troque pelos dados reais vindos da API quando estiver pronta.
+// trocar pelos dados reais vindos da API quando estiver pronta.
 const NOTIFICACOES: Notificacao[] = [
   {
     id: '1',

@@ -15,7 +15,7 @@ const COLORS = {
   cardBg: '#E9F6FA',
 };
 
-// Dados de exemplo — troque pelos médicos reais vindos da API.
+// Trocar pelos médicos reais vindos da API.
 const MEDICOS = [
   { id: 'm1', nome: 'Dr. Riquelme Santos', especialidade: 'Clínico Geral', clinica: 'Clínica Bem Estar' },
   { id: 'm2', nome: 'Dra. Carla Menezes', especialidade: 'Cardiologia', clinica: 'Clínica Bem Estar' },
@@ -31,7 +31,7 @@ const MESES = [
 ];
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-// Próximos 14 dias, sem domingos.
+
 function gerarDias() {
   const dias: Date[] = [];
   const hoje = new Date();

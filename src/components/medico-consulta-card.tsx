@@ -23,9 +23,9 @@ export const STATUS_INFO: Record<
 
 type Props = {
   consulta: Consulta;
-  /** Mostra a data junto da hora (útil na lista "Em aberto"). */
+  
   mostrarData?: boolean;
-  /** Texto do botão de ação à direita, ex.: "Editar". Se omitido, mostra a seta. */
+
   acaoLabel?: string;
   onPress: () => void;
 };

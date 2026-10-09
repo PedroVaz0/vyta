@@ -31,12 +31,9 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
 
   const handleEntrar = () => {
-    // TODO: chamar a API de autenticação, passando cpf, senha e role
+    // chamar a API de autenticação, passando cpf, senha
     console.log('Login', { role, cpf, senha });
 
-    // Por enquanto, navega direto para a Home do perfil escolhido.
-    // Quando o backend estiver pronto, faça essa navegação só depois
-    // de confirmar que o login deu certo.
     if (role === 'medico') {
       router.replace('/agenda');
     } else {

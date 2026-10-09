@@ -25,7 +25,7 @@ export default function AgendaMedicoScreen() {
   const [filtro, setFiltro] = useState<Filtro>('hoje');
   const [consultas, setConsultas] = useState<Consulta[]>([]);
 
-  // Permite abrir a agenda já no filtro "Em aberto" (atalho da home)
+  // abrir a agenda no filtro "Em aberto" (atalho da home)
   useEffect(() => {
     if (params.filtro === 'abertas') setFiltro('abertas');
     else if (params.filtro === 'hoje') setFiltro('hoje');

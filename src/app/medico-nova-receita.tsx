@@ -30,8 +30,7 @@ export default function MedicoNovaReceitaScreen() {
   const router = useRouter();
   const { pacienteId } = useLocalSearchParams<{ pacienteId?: string }>();
 
-  // Se veio da tela de um paciente, ele já vem selecionado.
-  // Se veio do atalho da home, o médico escolhe o paciente aqui.
+
   const pacienteFixo = getPaciente(pacienteId);
   const [selecionadoId, setSelecionadoId] = useState<string | undefined>(pacienteFixo?.id);
 
