@@ -192,18 +192,127 @@ export function getPaciente(id?: string) {
   return pacientes.find((p) => p.id === id);
 }
 
-export function adicionarReceita(
-  pacienteId: string,
-  receita: { medicamento: string; dosagem: string; instrucoes: string }
-) {
-  const paciente = pacientes.find((p) => p.id === pacienteId);
+// ---------------------------------------------------------------------------
+// Receitas (espelham as tabelas `receita` e `receita_item` do banco)
+// ---------------------------------------------------------------------------
+
+// ATENÇÃO: estes valores precisam ser IGUAIS aos do enum `tipo_receita` e
+// `status_receita` que já existem no banco. Ajuste aqui se forem diferentes;
+// a tela usa esta lista, então não precisa mudar mais nada.
+export type TipoReceita =
+  | 'simples'
+  | 'controle_especial'
+  | 'notificacao_azul'
+  | 'notificacao_amarela';
+
+export const TIPOS_RECEITA: { valor: TipoReceita; label: string }[] = [
+  { valor: 'simples', label: 'Simples' },
+  { valor: 'controle_especial', label: 'Controle especial' },
+  { valor: 'notificacao_azul', label: 'Notificação azul (B)' },
+  { valor: 'notificacao_amarela', label: 'Notificação amarela (A)' },
+];
+
+export type StatusReceita = 'emitida' | 'cancelada';
+export const STATUS_RECEITA_INICIAL: StatusReceita = 'emitida';
+
+// Notificações azul (B) e amarela (A) exigem número de notificação
+// (regra validada só no app: `numero_notificacao` é opcional no banco).
+export const TIPOS_COM_NOTIFICACAO: TipoReceita[] = ['notificacao_azul', 'notificacao_amarela'];
+
+// Espelha `receita_item`: nome_medicamento, dosagem, quantidade, duracao_tratamento.
+export type ReceitaItem = {
+  id: string;
+  nomeMedicamento: string;
+  dosagem: string; // dosagem + frequência no mesmo campo (ex.: "500 mg, a cada 8 horas")
+  quantidade: string;
+  duracaoTratamento: string;
+};
+
+export type Receita = {
+  id: string;
+  consultaId: string; // receita.consulta_id (obrigatório)
+  pacienteId: string;
+  dataEmissao: string; // DD/MM/AAAA
+  dataVencimento: string; // DD/MM/AAAA
+  tipo: TipoReceita;
+  status: StatusReceita;
+  numeroNotificacao?: string;
+  itens: ReceitaItem[];
+};
+
+const receitas: Receita[] = [];
+
+export function getReceitas() {
+  return receitas;
+}
+
+/** Consultas de um paciente (a receita precisa estar vinculada a uma consulta). */
+export function getConsultasDoPaciente(pacienteId?: string) {
+  return consultas.filter((c) => c.pacienteId === pacienteId);
+}
+
+/** Consulta sugerida: a de hoje, se houver; senão a primeira da lista. */
+export function getConsultaPadrao(pacienteId?: string) {
+  const lista = getConsultasDoPaciente(pacienteId);
+  return (lista.find((c) => c.data === HOJE) ?? lista[0])?.id;
+}
+
+/** Soma dias a uma data DD/MM/AAAA e devolve no mesmo formato. */
+export function adicionarDias(data: string, dias: number) {
+  const [dia, mes, ano] = data.split('/').map(Number);
+  const d = new Date(ano, mes - 1, dia + dias);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
+
+export function adicionarReceita(dados: {
+  consultaId: string;
+  tipo: TipoReceita;
+  numeroNotificacao?: string;
+  validadeDias: number;
+  itens: Omit<ReceitaItem, 'id'>[];
+}) {
+  const consulta = consultas.find((c) => c.id === dados.consultaId);
+  if (!consulta || dados.itens.length === 0) return;
+
+  const paciente = pacientes.find((p) => p.id === consulta.pacienteId);
   if (!paciente) return;
 
+  const stamp = Date.now();
+  const itens: ReceitaItem[] = dados.itens.map((item, i) => ({
+    ...item,
+    id: `ri${stamp}-${i}`,
+  }));
+
+  receitas.unshift({
+    id: `r${stamp}`,
+    consultaId: consulta.id,
+    pacienteId: paciente.id,
+    dataEmissao: HOJE,
+    dataVencimento: adicionarDias(HOJE, dados.validadeDias),
+    tipo: dados.tipo,
+    status: STATUS_RECEITA_INICIAL,
+    numeroNotificacao: dados.numeroNotificacao,
+    itens,
+  });
+
+  const [primeiro, ...resto] = itens;
   paciente.historico.unshift({
-    id: `h${Date.now()}`,
+    id: `h${stamp}`,
     tipo: 'receita',
-    titulo: `Receita: ${receita.medicamento}`,
+    titulo:
+      resto.length === 0
+        ? `Receita: ${primeiro.nomeMedicamento}`
+        : `Receita: ${primeiro.nomeMedicamento} e mais ${resto.length}`,
     data: HOJE,
-    descricao: [receita.dosagem, receita.instrucoes].filter(Boolean).join(' - '),
+    descricao:
+      resto.length === 0
+        ? [
+            primeiro.dosagem,
+            `Qtd.: ${primeiro.quantidade}`,
+            `Duração: ${primeiro.duracaoTratamento}`,
+          ].join(' - ')
+        : itens.map((i) => `${i.nomeMedicamento} (${i.dosagem})`).join('; '),
   });
 }
