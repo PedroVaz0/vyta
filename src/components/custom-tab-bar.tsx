@@ -1,6 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const COLORS = {
@@ -26,14 +25,16 @@ const LABELS_PADRAO: Record<string, string> = {
 
 type CustomTabBarProps = {
   state: any;
-  navigation: any;
+  emitter: any;
+  navigateToTab: (routeKey: string) => void;
   icons?: Record<string, keyof typeof Feather.glyphMap>;
   labels?: Record<string, string>;
 };
 
 export default function CustomTabBar({
   state,
-  navigation,
+  emitter,
+  navigateToTab,
   icons = ICONS_PADRAO,
   labels = LABELS_PADRAO,
 }: CustomTabBarProps) {
@@ -48,14 +49,14 @@ export default function CustomTabBar({
         const color = isFocused ? COLORS.orange : COLORS.white;
 
         const onPress = () => {
-          const event = navigation.emit({
+          const event = emitter.emit({
             type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
+            navigateToTab(route.key);
           }
         };
 
