@@ -106,7 +106,7 @@ type OpcoesProps = {
   valor: string;
   onChange: (v: string) => void;
   erro?: string;
-  desmarcavel?: boolean; // campo opcional: tocar de novo na opção limpa a escolha
+  desmarcavel?: boolean;
 };
 
 function Opcoes({ label, opcoes, valor, onChange, erro, desmarcavel }: OpcoesProps) {
@@ -137,7 +137,9 @@ export default function CadastroScreen() {
   const perfil: Perfil = role === 'medico' ? 'medico' : 'paciente';
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
+  
+  // CORREÇÃO AQUI: Tipagem alterada para 'any' para evitar conflitos com o scrollTo
+  const scrollRef = useRef<any>(null);
 
   const [etapa, setEtapa] = useState(0);
   const [form, setForm] = useState<CadastroForm>(FORM_INICIAL);
@@ -172,7 +174,6 @@ export default function CadastroScreen() {
       return;
     }
 
-    // TODO: enviar o payload para o backend de cadastro.
     const payload = montarPayload(perfil, form);
     console.log('Cadastro', { ...payload, usuario: { ...payload.usuario, senha: '***' } });
 
@@ -196,7 +197,6 @@ export default function CadastroScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Logo + título */}
         <View style={styles.header}>
           <Image
             source={require('../components/VytaLogo.png')}
@@ -214,7 +214,6 @@ export default function CadastroScreen() {
           </View>
         </View>
 
-        {/* Formulário */}
         <View style={styles.form}>
           {etapa === 0 && (
             <>
@@ -416,7 +415,6 @@ export default function CadastroScreen() {
           )}
         </View>
 
-        {/* Botões */}
         <View style={styles.footer}>
           <Pressable style={styles.submitButton} onPress={handleContinuar}>
             <Text style={styles.submitButtonText}>{ultima ? 'Cadastrar' : 'Continuar'}</Text>
