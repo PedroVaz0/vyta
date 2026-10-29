@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { limparSessao } from '../../lib/sessao';
 
 const COLORS = {
   teal: '#007C94',
@@ -34,7 +35,7 @@ export default function PerfilMedicoScreen() {
   const insets = useSafeAreaInsets();
 
   const handleSair = () => {
-    // quando o login real existir, limpar a autenticação do usuário
+    limparSessao();
     router.replace('/');
   };
 

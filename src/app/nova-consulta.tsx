@@ -1,8 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { dateParaExtenso, dateParaIso } from '../lib/datas';
+import { MODO_MOCK, listarMedicos, type MedicoOpcao } from '../services/api';
 import { adicionarConsulta } from '../store/consultas';
 
 const COLORS = {
@@ -15,8 +17,8 @@ const COLORS = {
   cardBg: '#E9F6FA',
 };
 
-// Trocar pelos médicos reais vindos da API.
-const MEDICOS = [
+// Usados só no modo mock (sem EXPO_PUBLIC_API_URL). Com a API, a lista vem do banco.
+const MEDICOS_MOCK: MedicoOpcao[] = [
   { id: 'm1', nome: 'Dr. Riquelme Santos', especialidade: 'Clínico Geral', clinica: 'Clínica Bem Estar' },
   { id: 'm2', nome: 'Dra. Carla Menezes', especialidade: 'Cardiologia', clinica: 'Clínica Bem Estar' },
   { id: 'm3', nome: 'Dr. André Lima', especialidade: 'Dermatologia', clinica: 'Espaço Saúde' },
@@ -25,10 +27,6 @@ const MEDICOS = [
 
 const HORARIOS = ['08:00', '09:30', '11:00', '14:00', '15:30', '17:00'];
 
-const MESES = [
-  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
-];
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 
@@ -42,8 +40,6 @@ function gerarDias() {
   return dias;
 }
 
-const formatarData = (d: Date) =>
-  `${String(d.getDate()).padStart(2, '0')} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
 
 export default function NovaConsultaScreen() {
   const router = useRouter();
@@ -53,24 +49,54 @@ export default function NovaConsultaScreen() {
   const [medicoId, setMedicoId] = useState<string | null>(null);
   const [diaIndex, setDiaIndex] = useState<number | null>(null);
   const [horario, setHorario] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const medico = MEDICOS.find((m) => m.id === medicoId);
-  const completo = !!medico && diaIndex !== null && !!horario;
+  const [medicos, setMedicos] = useState<MedicoOpcao[]>(MODO_MOCK ? MEDICOS_MOCK : []);
+  const [carregandoMedicos, setCarregandoMedicos] = useState(!MODO_MOCK);
+  const [erroMedicos, setErroMedicos] = useState<string | null>(null);
 
-  const handleAgendar = () => {
+  useEffect(() => {
+    if (MODO_MOCK) return;
+    let ativo = true;
+    listarMedicos()
+      .then((lista) => ativo && setMedicos(lista))
+      .catch((e: Error) => ativo && setErroMedicos(e.message))
+      .finally(() => ativo && setCarregandoMedicos(false));
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  const medico = medicos.find((m) => m.id === medicoId);
+  const completo = !!medico && diaIndex !== null && !!horario && !enviando;
+
+  const handleAgendar = async () => {
     if (!medico || diaIndex === null || !horario) return;
 
-    adicionarConsulta({
-      medico: medico.nome,
-      especialidade: medico.especialidade,
-      clinica: medico.clinica,
-      data: formatarData(dias[diaIndex]),
-      horario,
-    });
+    try {
+      setEnviando(true);
+      await adicionarConsulta({
+        medicoId: medico.id,
+        enderecoId: medico.enderecoId,
+        medico: medico.nome,
+        especialidade: medico.especialidade,
+        clinica: medico.clinica,
+        data: dateParaExtenso(dias[diaIndex]),
+        dataIso: dateParaIso(dias[diaIndex]),
+        horario,
+      });
 
-    Alert.alert('Consulta agendada', 'Sua consulta foi adicionada à lista.', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+      Alert.alert('Consulta agendada', 'Sua consulta foi adicionada à lista.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (e) {
+      Alert.alert(
+        'Não foi possível agendar',
+        e instanceof Error ? e.message : 'Tente novamente em instantes.'
+      );
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -89,7 +115,12 @@ export default function NovaConsultaScreen() {
 
         {/* Médico */}
         <Text style={styles.sectionTitle}>Médico</Text>
-        {MEDICOS.map((m) => {
+        {carregandoMedicos && <Text style={styles.medicoInfo}>Carregando médicos...</Text>}
+        {erroMedicos && <Text style={styles.medicoInfo}>{erroMedicos}</Text>}
+        {!carregandoMedicos && !erroMedicos && medicos.length === 0 && (
+          <Text style={styles.medicoInfo}>Nenhum médico disponível no momento.</Text>
+        )}
+        {medicos.map((m) => {
           const ativo = medicoId === m.id;
           return (
             <Pressable
@@ -103,7 +134,7 @@ export default function NovaConsultaScreen() {
               <View style={styles.medicoTextWrapper}>
                 <Text style={styles.medicoNome}>{m.nome}</Text>
                 <Text style={styles.medicoInfo}>
-                  {m.especialidade} · {m.clinica}
+                  {[m.especialidade, m.clinica].filter(Boolean).join(' · ')}
                 </Text>
               </View>
               {ativo && <Feather name="check-circle" size={20} color={COLORS.tealLight} />}
@@ -161,7 +192,7 @@ export default function NovaConsultaScreen() {
           onPress={handleAgendar}
           disabled={!completo}
         >
-          <Text style={styles.saveText}>Agendar consulta</Text>
+          <Text style={styles.saveText}>{enviando ? 'Agendando...' : 'Agendar consulta'}</Text>
         </Pressable>
       </View>
     </View>

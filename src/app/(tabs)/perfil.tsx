@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { limparSessao } from "../../lib/sessao";
 
 const COLORS = {
   teal: "#007C94",
@@ -46,8 +47,7 @@ export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
 
   const handleSair = () => {
-    // quando o login real existir, limpar o token
-    // antes de voltar para a tela inicial.
+    limparSessao();
     router.replace("/");
   };
 

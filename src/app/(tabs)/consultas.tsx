@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { StatusConsulta, useConsultas } from "../../store/consultas";
+import { StatusConsulta, carregarConsultas, useConsultas } from "../../store/consultas";
 
 const COLORS = {
     teal: "#007C94",
@@ -37,6 +37,13 @@ export default function ConsultasScreen() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
     const CONSULTAS = useConsultas();
+
+    // Recarrega do banco sempre que a aba ganha foco (no modo mock não faz nada).
+    useFocusEffect(
+        useCallback(() => {
+            carregarConsultas().catch(() => {});
+        }, [])
+    );
     const [filtroAtivo, setFiltroAtivo] = useState<StatusConsulta | "todas">("todas");
 
     const consultasFiltradas = useMemo(() => {

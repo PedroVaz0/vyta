@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusConsulta, useConsultas } from '../store/consultas';
+import { StatusConsulta, cancelarConsulta, useConsultas } from '../store/consultas';
 
 const COLORS = {
   teal: '#007C94',
@@ -75,8 +75,16 @@ export default function ConsultaDetalheScreen() {
         {
           text: 'Cancelar consulta',
           style: 'destructive',
-          onPress: () => {
-            console.log('Cancelar consulta', consulta.id);
+          onPress: async () => {
+            try {
+              await cancelarConsulta(consulta.id);
+              router.back();
+            } catch (e) {
+              Alert.alert(
+                'Não foi possível cancelar',
+                e instanceof Error ? e.message : 'Tente novamente em instantes.'
+              );
+            }
           },
         },
       ]

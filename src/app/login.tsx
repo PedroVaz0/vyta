@@ -12,6 +12,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TIPO_USUARIO } from '../constants/banco';
+import { setSessao } from '../lib/sessao';
+import { MODO_MOCK, login } from '../services/api';
 
 const COLORS = {
   teal: '#007C94',
@@ -30,14 +33,41 @@ export default function LoginScreen() {
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const handleEntrar = () => {
-    // chamar a API de autenticação, passando cpf, senha
-    console.log('Login', { role, cpf, senha });
+  const [erro, setErro] = useState('');
+  const [carregando, setCarregando] = useState(false);
 
-    if (role === 'medico') {
+  const tipo = role === 'medico' ? TIPO_USUARIO.medico : TIPO_USUARIO.paciente;
+
+  const irParaInicio = () => {
+    if (tipo === TIPO_USUARIO.medico) {
       router.replace('/agenda');
     } else {
       router.replace('/home');
+    }
+  };
+
+  const handleEntrar = async () => {
+    // Sem backend configurado (EXPO_PUBLIC_API_URL), entra direto com dados de exemplo.
+    if (MODO_MOCK) {
+      setSessao({ usuarioId: 'mock', tipo, nome: '' });
+      irParaInicio();
+      return;
+    }
+
+    if (cpf.replace(/\D/g, '').length !== 11 || !senha) {
+      setErro('Informe o CPF (11 dígitos) e a senha.');
+      return;
+    }
+
+    try {
+      setCarregando(true);
+      setErro('');
+      setSessao(await login(cpf, senha, tipo));
+      irParaInicio();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Não foi possível entrar.');
+    } finally {
+      setCarregando(false);
     }
   };
 
@@ -92,6 +122,8 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
+        {erro !== '' && <Text style={styles.erro}>{erro}</Text>}
+
         <Pressable onPress={() => { /* TODO: navegar para recuperação de senha */ }}>
           <Text style={styles.forgotPassword}>Esqueci a minha senha</Text>
         </Pressable>
@@ -99,8 +131,12 @@ export default function LoginScreen() {
 
       {/* Botão Entrar */}
       <View style={styles.footer}>
-        <Pressable style={styles.enterButton} onPress={handleEntrar}>
-          <Text style={styles.enterButtonText}>Entrar</Text>
+        <Pressable
+          style={[styles.enterButton, carregando && { opacity: 0.6 }]}
+          onPress={handleEntrar}
+          disabled={carregando}
+        >
+          <Text style={styles.enterButtonText}>{carregando ? 'Entrando...' : 'Entrar'}</Text>
         </Pressable>
 
         <View style={styles.signupRow}>
@@ -168,6 +204,11 @@ const styles = StyleSheet.create({
   },
   eyeButton: {
     padding: 4,
+  },
+  erro: {
+    color: '#C0392B',
+    fontSize: 13,
+    marginTop: 10,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
