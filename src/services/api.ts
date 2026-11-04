@@ -31,7 +31,7 @@ export const MODO_MOCK = API_URL === '';
 
 // Se você corrigir o ReceitaController do back para "/consultas/{consultaId}/receitas",
 // troque só esta linha.
-const rotaCriarReceita = (consultaId: number | string) => `/${consultaId}/receitas`;
+const rotaCriarReceita = (consultaId: number | string) => `/consultas/${consultaId}/receitas`;
 
 // ---------------------------------------------------------------------------
 // HTTP
