@@ -17,6 +17,7 @@ export type Laudo = {
   tipo: 'Sangue' | 'Imagem' | 'Urina';
   laboratorio: string;
   data: string; // data do exame
+  dataIso?: string; // AAAA-MM-DD (só nos laudos vindos da API)
   medicoSolicitante: string;
   resultados?: Resultado[]; // exames com valores (sangue, urina...)
   achados?: string; // exames de imagem

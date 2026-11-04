@@ -1,8 +1,11 @@
 import { Feather } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { limparSessao } from "../../lib/sessao";
+import { mascaraCpf } from "../../data/cadastro-form";
+import { limparSessao, useSessao } from "../../lib/sessao";
+import { MODO_MOCK, buscarPaciente } from "../../services/api";
 
 const COLORS = {
   teal: "#007C94",
@@ -14,8 +17,8 @@ const COLORS = {
   danger: "#E03131",
 };
 
-// trocar pelos dados reais do usuário logado quando o backend estiver pronto.
-const usuario = {
+// Dados de exemplo: usados só quando EXPO_PUBLIC_API_URL não está definida.
+const usuarioMock = {
   nome: "Maperi Julu",
   email: "maperi.julu@email.com",
   cpf: "123.456.789-00",
@@ -45,6 +48,17 @@ const opcoes = [
 export default function PerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const sessao = useSessao();
+  const [usuario, setUsuario] = useState(
+    MODO_MOCK ? usuarioMock : { nome: sessao?.nome ?? "", email: "", cpf: "" }
+  );
+
+  useEffect(() => {
+    if (MODO_MOCK || !sessao) return;
+    buscarPaciente(sessao.usuarioId)
+      .then((p) => setUsuario({ nome: p.nome, email: p.email, cpf: mascaraCpf(p.cpf) }))
+      .catch(() => {});
+  }, [sessao]);
 
   const handleSair = () => {
     limparSessao();

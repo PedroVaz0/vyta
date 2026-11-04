@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Share } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Alert, Linking, Share } from 'react-native';
+import { useSessao } from '../../lib/sessao';
+import { carregarConsultas, proximaDaLista, useConsultas } from '../../store/consultas';
+import { carregarLaudos, useLaudos } from '../../store/laudos';
 
 const COLORS = {
   teal: '#007C94',
@@ -23,36 +26,18 @@ const COLORS = {
   danger: '#E03131',
 };
 
-// Preciso trocar pelos dados reais do backend quando estiver pronto.
-const proximaConsulta = {
-  data: '05 de novembro - 14:00',
-  clinica: 'Clínica Bem estar',
-  medico: 'Dr. Riquelme Santos',
-};
-
-const laudos = [
-  {
-    id: '1',
-    titulo: 'Laudo de Exame de Sangue',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '21/08/2026',
-  },
-  {
-    id: '2',
-    titulo: 'Laudo de Exame de Sangue',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '17/06/2026',
-  },
-  {
-    id: '3',
-    titulo: 'Laudo de Exame de Sangue',
-    laboratorio: 'Labotário Oswaldo Cruz',
-    data: '02/03/2026',
-  },
-];
-
 export default function PacienteHomeScreen() {
-  const nomePaciente = 'Maperi Julu'; 
+  const sessao = useSessao();
+  const nomePaciente = sessao?.nome || 'paciente';
+  const proximaConsulta = proximaDaLista(useConsultas());
+  const laudos = useLaudos().slice(0, 3);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarConsultas().catch(() => {});
+      carregarLaudos().catch(() => {});
+    }, [])
+  );
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -66,9 +51,12 @@ export default function PacienteHomeScreen() {
     }
   };
 
-  const handleBaixarLaudo = (titulo: string) => {
-  
-    console.log('Baixar laudo', titulo);
+  const handleBaixarLaudo = (url: string | undefined, titulo: string) => {
+    if (url) {
+      Linking.openURL(url).catch(() => {});
+    } else {
+      Alert.alert('Arquivo indisponível', `O arquivo original de "${titulo}" ainda não está disponível.`);
+    }
   };
 
   return (
@@ -114,10 +102,18 @@ export default function PacienteHomeScreen() {
 
         <View style={styles.consultaTextWrapper}>
           <Text style={styles.consultaLabel}>Próxima consulta</Text>
-          <Text style={styles.consultaData}>{proximaConsulta.data}</Text>
+          {proximaConsulta ? (
+            <>
+              <Text style={styles.consultaData}>
+                {proximaConsulta.data} - {proximaConsulta.horario}
+              </Text>
 
-          <Text style={styles.consultaClinica}>{proximaConsulta.clinica}</Text>
-          <Text style={styles.consultaMedico}>{proximaConsulta.medico}</Text>
+              <Text style={styles.consultaClinica}>{proximaConsulta.clinica}</Text>
+              <Text style={styles.consultaMedico}>{proximaConsulta.medico}</Text>
+            </>
+          ) : (
+            <Text style={styles.consultaData}>Nenhuma consulta agendada</Text>
+          )}
         </View>
 
         <View style={styles.consultaArrowCircle}>
@@ -182,7 +178,7 @@ export default function PacienteHomeScreen() {
               style={styles.laudoActionButton}
               onPress={(e) => {
                 e.stopPropagation();
-                handleBaixarLaudo(laudo.titulo);
+                handleBaixarLaudo(laudo.url, laudo.titulo);
               }}
             >
               <Feather name="download" size={18} color={COLORS.teal} />

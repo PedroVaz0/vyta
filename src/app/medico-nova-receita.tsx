@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,13 +18,16 @@ import {
   TIPOS_COM_NOTIFICACAO,
   TIPOS_RECEITA,
   adicionarDias,
-  adicionarReceita,
+  VALIDADE_POR_TIPO,
+  carregarAgendaMedico,
+  emitirReceita,
   getConsultaPadrao,
   getConsultasDoPaciente,
   getPaciente,
   getPacientes,
   type TipoReceita,
 } from '../data/medico';
+import { MODO_MOCK } from '../services/api';
 
 const COLORS = {
   teal: '#007C94',
@@ -106,10 +109,27 @@ export default function MedicoNovaReceitaScreen() {
   const [validadeDias, setValidadeDias] = useState(30);
   const [itens, setItens] = useState<ItemForm[]>([novoItem()]);
   const [tentouEnviar, setTentouEnviar] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [, setVersao] = useState(0);
+
+  // Garante que pacientes e consultas já foram buscados no back-end.
+  useEffect(() => {
+    carregarAgendaMedico()
+      .then(() => {
+        if (pacienteId) {
+          setSelecionadoId((atual) => atual ?? getPaciente(pacienteId)?.id);
+          setConsultaId((atual) => atual ?? getConsultaPadrao(pacienteId));
+        }
+        setVersao((v) => v + 1);
+      })
+      .catch(() => {});
+  }, [pacienteId]);
 
   const pacienteSelecionado = getPaciente(selecionadoId);
   const consultasDoPaciente = getConsultasDoPaciente(selecionadoId);
   const exigeNotificacao = TIPOS_COM_NOTIFICACAO.includes(tipo);
+  // Com a API o back define a validade pelo tipo da receita.
+  const validade = MODO_MOCK ? validadeDias : VALIDADE_POR_TIPO[tipo];
 
   const escolherPaciente = (id: string) => {
     setSelecionadoId(id);
@@ -123,25 +143,37 @@ export default function MedicoNovaReceitaScreen() {
   const removerItem = (key: string) =>
     setItens((atual) => (atual.length > 1 ? atual.filter((i) => i.key !== key) : atual));
 
-  const handleEmitir = () => {
+  const handleEmitir = async () => {
+    if (enviando) return;
     setTentouEnviar(true);
 
     if (!selecionadoId || !consultaId) return;
     if (exigeNotificacao && !numeroNotificacao.trim()) return;
     if (!itens.every(itemCompleto)) return;
 
-    adicionarReceita({
-      consultaId,
-      tipo,
-      numeroNotificacao: exigeNotificacao ? numeroNotificacao.trim() : undefined,
-      validadeDias,
-      itens: itens.map((i) => ({
-        nomeMedicamento: i.medicamento.trim(),
-        dosagem: i.dosagem.trim(),
-        quantidade: i.quantidade.trim(),
-        duracaoTratamento: i.duracao.trim(),
-      })),
-    });
+    try {
+      setEnviando(true);
+      await emitirReceita({
+        consultaId,
+        tipo,
+        numeroNotificacao: exigeNotificacao ? numeroNotificacao.trim() : undefined,
+        validadeDias: validade,
+        itens: itens.map((i) => ({
+          nomeMedicamento: i.medicamento.trim(),
+          dosagem: i.dosagem.trim(),
+          quantidade: i.quantidade.trim(),
+          duracaoTratamento: i.duracao.trim(),
+        })),
+      });
+    } catch (e) {
+      Alert.alert(
+        'Não foi possível emitir a receita',
+        e instanceof Error ? e.message : 'Tente novamente em instantes.'
+      );
+      return;
+    } finally {
+      setEnviando(false);
+    }
 
     Alert.alert(
       'Receita emitida',
@@ -208,7 +240,9 @@ export default function MedicoNovaReceitaScreen() {
             <Text style={styles.label}>Consulta</Text>
             {consultasDoPaciente.length === 0 ? (
               <Text style={styles.errorText}>
-                Este paciente não tem consultas. A receita precisa estar vinculada a uma consulta.
+                {MODO_MOCK
+                  ? 'Este paciente não tem consultas. A receita precisa estar vinculada a uma consulta.'
+                  : 'Este paciente não tem consultas realizadas. A receita só pode ser emitida para uma consulta realizada.'}
               </Text>
             ) : (
               <View style={styles.chipsWrap}>
@@ -268,22 +302,25 @@ export default function MedicoNovaReceitaScreen() {
 
         {/* Validade (data_vencimento) */}
         <Text style={styles.label}>Validade</Text>
-        <View style={styles.chipsWrap}>
-          {VALIDADES.map((d) => {
-            const ativo = d === validadeDias;
-            return (
-              <Pressable
-                key={d}
-                style={[styles.chip, ativo && styles.chipActive]}
-                onPress={() => setValidadeDias(d)}
-              >
-                <Text style={[styles.chipText, ativo && styles.chipTextActive]}>{d} dias</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        {MODO_MOCK && (
+          <View style={styles.chipsWrap}>
+            {VALIDADES.map((d) => {
+              const ativo = d === validadeDias;
+              return (
+                <Pressable
+                  key={d}
+                  style={[styles.chip, ativo && styles.chipActive]}
+                  onPress={() => setValidadeDias(d)}
+                >
+                  <Text style={[styles.chipText, ativo && styles.chipTextActive]}>{d} dias</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
         <Text style={styles.helperText}>
-          Emissão {HOJE} - vence em {adicionarDias(HOJE, validadeDias)}
+          Emissão {HOJE} - vence em {adicionarDias(HOJE, validade)}
+          {MODO_MOCK ? '' : ' (prazo definido pelo tipo de receita)'}
         </Text>
 
         {/* Medicamentos (receita_item) */}
@@ -339,9 +376,9 @@ export default function MedicoNovaReceitaScreen() {
           <Text style={styles.addButtonText}>Adicionar medicamento</Text>
         </Pressable>
 
-        <Pressable style={styles.submitButton} onPress={handleEmitir}>
+        <Pressable style={styles.submitButton} onPress={handleEmitir} disabled={enviando}>
           <Feather name="check" size={18} color={COLORS.white} />
-          <Text style={styles.submitText}>Emitir receita</Text>
+          <Text style={styles.submitText}>{enviando ? 'Emitindo...' : 'Emitir receita'}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

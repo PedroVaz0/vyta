@@ -13,7 +13,14 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
-import { atualizarConsulta, getConsulta, type StatusConsulta } from '../data/medico';
+import {
+  atualizarConsulta,
+  cancelarConsultaMedico,
+  getConsulta,
+  salvarStatusConsulta,
+  type StatusConsulta,
+} from '../data/medico';
+import { MODO_MOCK } from '../services/api';
 import { STATUS_INFO } from '../components/medico-consulta-card'
 
 const COLORS = {
@@ -52,34 +59,68 @@ export default function MedicoEditarConsultaScreen() {
   const [hora, setHora] = useState(consulta?.hora ?? '');
   const [motivo, setMotivo] = useState(consulta?.motivo ?? '');
   const [status, setStatus] = useState<StatusConsulta>(consulta?.status ?? 'aberta');
+  const [salvando, setSalvando] = useState(false);
 
   const dataValida = /^\d{2}\/\d{2}\/\d{4}$/.test(data);
   const horaValida = /^([01]\d|2[0-3]):[0-5]\d$/.test(hora);
 
-  const handleSalvar = () => {
-    if (!consulta) return;
+  const handleSalvar = async () => {
+    if (!consulta || salvando) return;
 
-    if (!dataValida || !horaValida) {
-      Alert.alert('Confira os dados', 'Use a data no formato DD/MM/AAAA e a hora como HH:MM.');
+    if (MODO_MOCK) {
+      if (!dataValida || !horaValida) {
+        Alert.alert('Confira os dados', 'Use a data no formato DD/MM/AAAA e a hora como HH:MM.');
+        return;
+      }
+
+      atualizarConsulta(consulta.id, { data, hora, motivo: motivo.trim(), status });
+
+      Alert.alert('Consulta atualizada', 'As alterações foram salvas.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
       return;
     }
 
-    atualizarConsulta(consulta.id, { data, hora, motivo: motivo.trim(), status });
+    // Com a API o back só permite mudar a situação da consulta.
+    if (status === consulta.status) {
+      Alert.alert('Nada para salvar', 'Altere a situação da consulta para salvar.');
+      return;
+    }
 
-    Alert.alert('Consulta atualizada', 'As alterações foram salvas.', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+    try {
+      setSalvando(true);
+      await salvarStatusConsulta(consulta.id, status);
+      Alert.alert('Consulta atualizada', 'A situação da consulta foi salva.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (e) {
+      Alert.alert(
+        'Não foi possível salvar',
+        e instanceof Error ? e.message : 'Tente novamente em instantes.'
+      );
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleCancelarConsulta = () => {
+    if (!consulta) return;
+
     Alert.alert('Cancelar consulta', 'Deseja realmente cancelar esta consulta?', [
       { text: 'Voltar', style: 'cancel' },
       {
         text: 'Cancelar consulta',
         style: 'destructive',
-        onPress: () => {
-          
-          router.back();
+        onPress: async () => {
+          try {
+            await cancelarConsultaMedico(consulta.id);
+            router.back();
+          } catch (e) {
+            Alert.alert(
+              'Não foi possível cancelar',
+              e instanceof Error ? e.message : 'Tente novamente em instantes.'
+            );
+          }
         },
       },
     ]);
@@ -124,6 +165,7 @@ export default function MedicoEditarConsultaScreen() {
                   style={styles.input}
                   value={data}
                   onChangeText={(v) => setData(mascaraData(v))}
+                  editable={MODO_MOCK}
                   keyboardType="number-pad"
                   placeholder="DD/MM/AAAA"
                   placeholderTextColor={COLORS.textGray}
@@ -136,6 +178,7 @@ export default function MedicoEditarConsultaScreen() {
                   style={styles.input}
                   value={hora}
                   onChangeText={(v) => setHora(mascaraHora(v))}
+                  editable={MODO_MOCK}
                   keyboardType="number-pad"
                   placeholder="HH:MM"
                   placeholderTextColor={COLORS.textGray}
@@ -148,11 +191,18 @@ export default function MedicoEditarConsultaScreen() {
               style={[styles.input, styles.inputMultiline]}
               value={motivo}
               onChangeText={setMotivo}
+              editable={MODO_MOCK}
               multiline
               textAlignVertical="top"
               placeholder="Descreva o motivo"
               placeholderTextColor={COLORS.textGray}
             />
+
+            {!MODO_MOCK && (
+              <Text style={styles.emptyText}>
+                Data, hora e motivo não podem ser alterados por aqui; apenas a situação.
+              </Text>
+            )}
 
             <Text style={styles.label}>Situação</Text>
             <View style={styles.chipsRow}>
@@ -172,7 +222,7 @@ export default function MedicoEditarConsultaScreen() {
               })}
             </View>
 
-            <Pressable style={styles.saveButton} onPress={handleSalvar}>
+            <Pressable style={styles.saveButton} onPress={handleSalvar} disabled={salvando}>
               <Feather name="check" size={18} color={COLORS.white} />
               <Text style={styles.saveText}>Salvar alterações</Text>
             </Pressable>

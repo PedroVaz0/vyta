@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { getPacientes } from '../../data/medico';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { carregarAgendaMedico, getPacientes } from '../../data/medico';
 
 const COLORS = {
   teal: '#007C94',
@@ -25,11 +25,20 @@ export default function PacientesMedicoScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [busca, setBusca] = useState('');
+  const [versao, setVersao] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarAgendaMedico()
+        .then(() => setVersao((v) => v + 1))
+        .catch(() => {});
+    }, [])
+  );
 
   const pacientes = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return getPacientes().filter((p) => p.nome.toLowerCase().includes(termo));
-  }, [busca]);
+  }, [busca, versao]);
 
   return (
     <ScrollView
@@ -83,7 +92,7 @@ export default function PacientesMedicoScreen() {
 
           <View style={styles.textWrapper}>
             <Text style={styles.nome}>{paciente.nome}</Text>
-            <Text style={styles.info}>{paciente.idade} anos</Text>
+            {paciente.idade != null && <Text style={styles.info}>{paciente.idade} anos</Text>}
             <Text style={styles.info}>Última consulta: {paciente.ultimaConsulta}</Text>
           </View>
 

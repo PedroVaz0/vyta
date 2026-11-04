@@ -1,20 +1,21 @@
 import { useSyncExternalStore } from "react";
 import {
-    MODALIDADE_PADRAO,
+    MODALIDADE,
     STATUS_BANCO,
-    STATUS_CONSULTA_NOVA,
     TIPO_CONSULTA_PADRAO,
     statusBancoParaPaciente,
+    statusDaApi,
     type StatusPaciente,
 } from "../constants/banco";
 import { horaCurta, isoParaExtenso } from "../lib/datas";
 import { getSessao } from "../lib/sessao";
 import {
     MODO_MOCK,
-    atualizarStatusConsulta,
+    alterarStatusConsulta,
     criarConsulta,
     listarConsultasPaciente,
-    type LinhaConsulta,
+    rotuloEndereco,
+    type ConsultaApi,
 } from "../services/api";
 
 // No app do paciente "aberta" e "confirmada" aparecem como "agendada".
@@ -24,12 +25,13 @@ export type Consulta = {
     id: string; // consulta.consulta_id
     medico: string;
     especialidade: string;
-    clinica: string;
+    clinica: string; // endereço do atendimento (o banco não tem o nome da clínica)
     data: string; // texto exibido, ex.: "05 de novembro de 2026"
     horario: string; // "14:00"
     status: StatusConsulta;
     medicoId?: string; // medico.usuario_id
     enderecoId?: string; // consulta.endereco_id
+    dataIso?: string; // "AAAA-MM-DD" (só nas consultas vindas da API)
 };
 
 // Dados de exemplo: usados só quando EXPO_PUBLIC_API_URL não está definida.
@@ -81,7 +83,13 @@ const CONSULTAS_MOCK: Consulta[] = [
     },
 ];
 
-let consultas: Consulta[] = MODO_MOCK ? CONSULTAS_MOCK : [];
+const VAZIO: Consulta[] = [];
+
+let consultas: Consulta[] = MODO_MOCK ? CONSULTAS_MOCK : VAZIO;
+// De quem são as consultas em memória (evita mostrar dados do usuário anterior).
+let dono: string | null = null;
+
+const idLogado = () => getSessao()?.usuarioId ?? null;
 
 const listeners = new Set<() => void>();
 
@@ -93,25 +101,28 @@ function subscribe(listener: () => void) {
 }
 
 function getSnapshot() {
-    return consultas;
+    if (MODO_MOCK) return consultas;
+    return dono !== null && dono === idLogado() ? consultas : VAZIO;
 }
 
 function atualizar(novas: Consulta[]) {
     consultas = novas;
+    dono = idLogado();
     listeners.forEach((l) => l());
 }
 
-function doBanco(l: LinhaConsulta): Consulta {
+function doApi(c: ConsultaApi): Consulta {
     return {
-        id: String(l.consulta_id),
-        medico: l.medico_nome,
-        especialidade: l.especialidade,
-        clinica: l.clinica ?? "",
-        data: isoParaExtenso(l.data_consulta),
-        horario: horaCurta(l.horario),
-        status: statusBancoParaPaciente(l.status_consulta),
-        medicoId: String(l.medico_id),
-        enderecoId: l.endereco_id == null ? undefined : String(l.endereco_id),
+        id: String(c.id),
+        medico: c.medicoNome,
+        especialidade: c.especialidade,
+        clinica: c.endereco ? rotuloEndereco(c.endereco) : "Consulta online",
+        data: isoParaExtenso(c.dataConsulta),
+        horario: horaCurta(c.horario),
+        status: statusBancoParaPaciente(statusDaApi(c.statusConsulta)),
+        medicoId: String(c.medicoId),
+        enderecoId: c.endereco ? String(c.endereco.id) : undefined,
+        dataIso: c.dataConsulta,
     };
 }
 
@@ -125,7 +136,19 @@ function pacienteLogado() {
 export async function carregarConsultas() {
     if (MODO_MOCK) return;
     const linhas = await listarConsultasPaciente(pacienteLogado());
-    atualizar(linhas.map(doBanco));
+    atualizar(linhas.map(doApi));
+}
+
+/** Próxima consulta ainda não realizada nem cancelada (a mais cedo). */
+export function proximaDaLista(lista: Consulta[]): Consulta | undefined {
+    const agora = new Date();
+    const dois = (n: number) => String(n).padStart(2, "0");
+    const agoraIso = `${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}T${dois(agora.getHours())}:${dois(agora.getMinutes())}`;
+
+    return lista
+        .filter((c) => c.status === "agendada")
+        .filter((c) => !c.dataIso || `${c.dataIso}T${c.horario}` >= agoraIso)
+        .sort((a, b) => `${a.dataIso ?? ""}T${a.horario}`.localeCompare(`${b.dataIso ?? ""}T${b.horario}`))[0];
 }
 
 export type NovaConsulta = Omit<Consulta, "id" | "status"> & {
@@ -135,7 +158,7 @@ export type NovaConsulta = Omit<Consulta, "id" | "status"> & {
 export async function adicionarConsulta({ dataIso, ...nova }: NovaConsulta) {
     if (MODO_MOCK) {
         atualizar([
-            { ...nova, id: String(Date.now()), status: "agendada" },
+            { ...nova, dataIso, id: String(Date.now()), status: "agendada" },
             ...consultas,
         ]);
         return;
@@ -143,15 +166,18 @@ export async function adicionarConsulta({ dataIso, ...nova }: NovaConsulta) {
 
     if (!nova.medicoId) throw new Error("Médico inválido.");
 
+    // O back exige endereço na consulta presencial e proíbe na online:
+    // médico com endereço cadastrado atende presencial; sem endereço, online.
+    const enderecoId = nova.enderecoId ? Number(nova.enderecoId) : null;
+
     await criarConsulta({
-        paciente_id: Number(pacienteLogado()),
-        medico_id: Number(nova.medicoId),
-        endereco_id: nova.enderecoId ? Number(nova.enderecoId) : null,
-        data_consulta: dataIso,
+        pacienteId: Number(pacienteLogado()),
+        medicoId: Number(nova.medicoId),
+        dataConsulta: dataIso,
         horario: nova.horario,
-        tipo_consulta: TIPO_CONSULTA_PADRAO,
-        modalidade: MODALIDADE_PADRAO,
-        status_consulta: STATUS_CONSULTA_NOVA,
+        tipoConsulta: TIPO_CONSULTA_PADRAO,
+        modalidade: enderecoId ? MODALIDADE.presencial : MODALIDADE.online,
+        enderecoId,
     });
     await carregarConsultas();
 }
@@ -164,7 +190,7 @@ export async function cancelarConsulta(id: string) {
         return;
     }
 
-    await atualizarStatusConsulta(id, STATUS_BANCO.cancelada);
+    await alterarStatusConsulta(id, STATUS_BANCO.cancelada);
     await carregarConsultas();
 }
 

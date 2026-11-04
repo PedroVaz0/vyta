@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { limparSessao } from '../../lib/sessao';
+import { limparSessao, useSessao } from '../../lib/sessao';
+import { MODO_MOCK, buscarMedico } from '../../services/api';
 
 const COLORS = {
   teal: '#007C94',
@@ -15,8 +16,8 @@ const COLORS = {
   danger: '#E03131',
 };
 
-//  Preciso trocar pelos dados reais do médico logado quando o backend estiver pronto.
-const medico = {
+// Dados de exemplo: usados só quando EXPO_PUBLIC_API_URL não está definida.
+const medicoMock = {
   nome: 'Dr. Riquelme Santos',
   especialidade: 'Clínico Geral',
   crm: 'CRM 123456-SP',
@@ -33,6 +34,24 @@ const opcoes = [
 export default function PerfilMedicoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const sessao = useSessao();
+  const [medico, setMedico] = useState(
+    MODO_MOCK ? medicoMock : { nome: sessao?.nome ?? '', especialidade: '', crm: '', email: '' }
+  );
+
+  useEffect(() => {
+    if (MODO_MOCK || !sessao) return;
+    buscarMedico(sessao.usuarioId)
+      .then((m) =>
+        setMedico({
+          nome: m.nome,
+          especialidade: m.especialidade,
+          crm: `CRM ${m.crm}-${m.crmUf}`,
+          email: m.email,
+        })
+      )
+      .catch(() => {});
+  }, [sessao]);
 
   const handleSair = () => {
     limparSessao();

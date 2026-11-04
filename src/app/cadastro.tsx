@@ -152,7 +152,7 @@ export default function CadastroScreen() {
   const ETAPAS = [
     'Dados pessoais',
     perfil === 'medico' ? 'Dados profissionais' : 'Saúde e emergência',
-    'Endereço (opcional)',
+    perfil === 'medico' ? 'Endereço do consultório' : 'Endereço (opcional)',
   ];
   const ultima = etapa === ETAPAS.length - 1;
 

@@ -1,6 +1,5 @@
 // Regras, máscaras e montagem do payload do cadastro.
-// O formato do payload segue as colunas das tabelas usuario, paciente,
-// medico e endereco do banco.
+// O formato do payload segue o JSON do back-end (PacienteRequest / MedicoRequest).
 
 export type Perfil = 'medico' | 'paciente';
 
@@ -77,8 +76,25 @@ export const UFS = [
   'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
 ];
 
-// ATENÇÃO: precisa ser um valor que já exista no enum `tipo_endereco` do banco.
-export const TIPO_ENDERECO_USUARIO = 'residencial';
+// Valores do app -> enums do back-end (SexoBiologico e TipoSanguineo).
+// ATENÇÃO: o enum SexoBiologico do back só tem MASCULINO e FEMININO. Para a opção
+// "Intersexo" funcionar, adicione INTERSEXO ao enum (a coluna é varchar, não muda o banco).
+export const SEXO_PARA_API: Record<string, string> = {
+  Feminino: 'FEMININO',
+  Masculino: 'MASCULINO',
+  Intersexo: 'INTERSEXO',
+};
+
+export const TIPO_SANGUINEO_PARA_API: Record<string, string> = {
+  'A+': 'A_POSITIVO',
+  'A-': 'A_NEGATIVO',
+  'B+': 'B_POSITIVO',
+  'B-': 'B_NEGATIVO',
+  'AB+': 'AB_POSITIVO',
+  'AB-': 'AB_NEGATIVO',
+  'O+': 'O_POSITIVO',
+  'O-': 'O_NEGATIVO',
+};
 
 // ---------------------------------------------------------------------------
 // Máscaras
@@ -183,7 +199,8 @@ export function validarEtapa(etapa: number, f: CadastroForm, perfil: Perfil): Er
     }
   }
 
-  if (etapa === 2 && enderecoPreenchido(f)) {
+  // Médico precisa de endereço (consulta presencial exige o local do atendimento).
+  if (etapa === 2 && (perfil === 'medico' || enderecoPreenchido(f))) {
     if (soDigitos(f.cep).length !== 8) e.cep = 'CEP inválido.';
     if (!f.logradouro.trim()) e.logradouro = 'Informe o logradouro.';
     if (!f.numero.trim()) e.numero = 'Informe o número.';
@@ -197,48 +214,51 @@ export function validarEtapa(etapa: number, f: CadastroForm, perfil: Perfil): Er
 }
 
 // ---------------------------------------------------------------------------
-// Payload (colunas do banco)
+// Payload (JSON que o back espera em POST /pacientes e POST /medicos)
 // ---------------------------------------------------------------------------
 
 export function montarPayload(perfil: Perfil, f: CadastroForm) {
-  return {
-    usuario: {
-      // Ajuste se o enum/valores de `tipo_usuario` no banco forem outros.
-      tipo_usuario: perfil,
-      nome: f.nome.trim(),
-      cpf: soDigitos(f.cpf),
-      email: f.email.trim().toLowerCase(),
-      telefone: soDigitos(f.telefone),
-      data_nascimento: dataParaIso(f.nascimento),
-      sexo_biologico: f.sexo,
-      identidade_genero: f.identidade,
-      nome_contato_emergencia: f.contatoNome.trim(),
-      tel_contato_emergencia: soDigitos(f.contatoTel),
-      // status_conta: definido pelo backend ao criar a conta.
-      // senha: enviar por HTTPS; o backend deve gravar apenas o hash.
-      senha: f.senha,
-    },
-    endereco: enderecoPreenchido(f)
-      ? {
-          cep: soDigitos(f.cep),
-          logradouro: f.logradouro.trim(),
-          numero: f.numero.trim(),
-          complemento: f.complemento.trim() || null,
-          bairro: f.bairro.trim(),
-          cidade: f.cidade.trim(),
-          estado: f.estado.trim().toUpperCase(),
-          pais: f.pais.trim(),
-          tipo_endereco: TIPO_ENDERECO_USUARIO,
-        }
-      : null, // usuario.endereco_id é opcional
-    paciente: perfil === 'paciente' ? { tipo_sanguineo: f.tipoSanguineo || null } : null,
-    medico:
-      perfil === 'medico'
-        ? {
-            crm: f.crm.trim(),
-            crm_uf: f.crmUf.trim().toUpperCase(),
-            especialidade: f.especialidade.trim(),
-          }
-        : null,
+  const endereco = enderecoPreenchido(f)
+    ? {
+        cep: soDigitos(f.cep),
+        logradouro: f.logradouro.trim(),
+        numero: f.numero.trim(),
+        complemento: f.complemento.trim() || null,
+        bairro: f.bairro.trim(),
+        cidade: f.cidade.trim(),
+        estado: f.estado.trim().toUpperCase(),
+        pais: f.pais.trim(),
+      }
+    : null;
+
+  const base = {
+    nome: f.nome.trim(),
+    cpf: soDigitos(f.cpf),
+    email: f.email.trim().toLowerCase(),
+    telefone: soDigitos(f.telefone),
+    dataNascimento: dataParaIso(f.nascimento),
+    sexoBiologico: SEXO_PARA_API[f.sexo] ?? f.sexo.toUpperCase(),
+    identidadeGenero: f.identidade,
+    nomeContatoEmergencia: f.contatoNome.trim(),
+    telContatoEmergencia: soDigitos(f.contatoTel),
+    senha: f.senha, // enviar por HTTPS; o back grava só o hash (BCrypt)
+    endereco,
   };
+
+  const corpo =
+    perfil === 'medico'
+      ? {
+          ...base,
+          crm: f.crm.trim(),
+          crmUf: f.crmUf.trim().toUpperCase(),
+          especialidade: f.especialidade.trim(),
+        }
+      : {
+          ...base,
+          tipoSanguineo: f.tipoSanguineo ? TIPO_SANGUINEO_PARA_API[f.tipoSanguineo] : null,
+        };
+
+  return { perfil, corpo };
 }
+
+export type PayloadCadastro = ReturnType<typeof montarPayload>;

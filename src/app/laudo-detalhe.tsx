@@ -2,7 +2,8 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getLaudoPorId, StatusResultado } from '../data/laudos';
+import type { StatusResultado } from '../data/laudos';
+import { getLaudoPorId } from '../store/laudos';
 
 const COLORS = {
   teal: '#007C94',

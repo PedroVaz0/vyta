@@ -1,8 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback } from 'react';
+import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Laudo, LAUDOS } from '../../data/laudos';
+import type { Laudo } from '../../data/laudos';
+import { carregarLaudos, useLaudos } from '../../store/laudos';
 
 const COLORS = {
   teal: '#007C94',
@@ -16,14 +18,24 @@ const COLORS = {
 export default function LaudosScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const LAUDOS = useLaudos();
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarLaudos().catch(() => {});
+    }, [])
+  );
 
   const abrirLaudo = (laudo: Laudo) => {
     router.push({ pathname: '/laudo-detalhe', params: { id: laudo.id } } as any);
   };
 
   const handleBaixar = (laudo: Laudo) => {
-    // Torcar quando o backend tiver a URL
-    console.log('Baixar laudo', laudo.titulo);
+    if (laudo.url) {
+      Linking.openURL(laudo.url).catch(() => {});
+    } else {
+      Alert.alert('Arquivo indisponível', 'O arquivo original deste laudo ainda não está disponível.');
+    }
   };
 
   const handleCompartilhar = async (laudo: Laudo) => {
@@ -42,6 +54,12 @@ export default function LaudosScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
       >
+        {LAUDOS.length === 0 && (
+          <Text style={{ color: COLORS.textGray, textAlign: 'center', marginTop: 24 }}>
+            Nenhum laudo disponível.
+          </Text>
+        )}
+
         {LAUDOS.map((laudo) => (
           <Pressable
             key={laudo.id}

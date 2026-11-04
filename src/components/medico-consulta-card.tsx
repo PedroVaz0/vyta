@@ -19,6 +19,7 @@ export const STATUS_INFO: Record<
   confirmada: { label: 'Confirmada', color: COLORS.teal, bg: '#D2EBF1' },
   aberta: { label: 'Em aberto', color: '#C2410C', bg: '#FFE4DA' },
   concluida: { label: 'Concluída', color: COLORS.textGray, bg: '#ECECEC' },
+  cancelada: { label: 'Cancelada', color: '#B42318', bg: '#FDE7E4' },
 };
 
 type Props = {

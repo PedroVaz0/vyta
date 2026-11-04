@@ -3,7 +3,13 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { getPaciente, type ItemHistorico, type Paciente } from '../data/medico';
+import {
+  carregarAgendaMedico,
+  carregarHistoricoPaciente,
+  getPaciente,
+  type ItemHistorico,
+  type Paciente,
+} from '../data/medico';
 
 const COLORS = {
   teal: '#007C94',
@@ -31,8 +37,16 @@ export default function MedicoPacienteScreen() {
   // Recarrega ao voltar da tela de receita para mostrar o novo item no histórico
   useFocusEffect(
     useCallback(() => {
-      const atual = getPaciente(id);
-      setPaciente(atual ? { ...atual, historico: [...atual.historico] } : undefined);
+      const mostrar = () => {
+        const atual = getPaciente(id);
+        setPaciente(atual ? { ...atual, historico: [...atual.historico] } : undefined);
+      };
+
+      mostrar();
+      carregarAgendaMedico()
+        .then(() => carregarHistoricoPaciente(id))
+        .catch(() => {})
+        .finally(mostrar);
     }, [id])
   );
 
@@ -66,7 +80,8 @@ export default function MedicoPacienteScreen() {
               </View>
               <Text style={styles.nome}>{paciente.nome}</Text>
               <Text style={styles.info}>
-                {paciente.idade} anos - Última consulta {paciente.ultimaConsulta}
+                {paciente.idade != null ? `${paciente.idade} anos - ` : ''}Última consulta{' '}
+                {paciente.ultimaConsulta}
               </Text>
             </View>
 

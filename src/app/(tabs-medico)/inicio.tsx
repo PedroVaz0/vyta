@@ -4,7 +4,9 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import MedicoConsultaCard from '../../components/medico-consulta-card';
-import { HOJE, getConsultas, medico, type Consulta } from '../../data/medico';
+import { HOJE, carregarAgendaMedico, getConsultas, medico, type Consulta } from '../../data/medico';
+import { useSessao } from '../../lib/sessao';
+import { MODO_MOCK } from '../../services/api';
 
 const COLORS = {
   teal: '#007C94',
@@ -21,16 +23,21 @@ type IconName = React.ComponentProps<typeof Feather>['name'];
 export default function MedicoHomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const sessao = useSessao();
+  const nomeMedico = MODO_MOCK ? medico.nome : sessao?.nome ?? '';
   const [consultas, setConsultas] = useState<Consulta[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       setConsultas([...getConsultas()]);
+      carregarAgendaMedico()
+        .then(() => setConsultas([...getConsultas()]))
+        .catch(() => {});
     }, [])
   );
 
   const consultasHoje = consultas
-    .filter((c) => c.data === HOJE)
+    .filter((c) => c.data === HOJE && c.status !== 'cancelada')
     .sort((a, b) => a.hora.localeCompare(b.hora));
   const emAberto = consultas.filter((c) => c.status === 'aberta');
   const proxima = consultasHoje.find((c) => c.status !== 'concluida');
@@ -96,7 +103,7 @@ export default function MedicoHomeScreen() {
       </View>
 
       {/* Ola */}
-      <Text style={styles.greeting}>Olá, {medico.nome}</Text>
+      <Text style={styles.greeting}>Olá, {nomeMedico}</Text>
       <Text style={styles.subGreeting}>
         {consultasHoje.length === 0
           ? 'Você não tem consultas hoje.'

@@ -4,7 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import MedicoConsultaCard from '../../components/medico-consulta-card';
-import { HOJE, getConsultas, type Consulta } from '../../data/medico';
+import { HOJE, carregarAgendaMedico, getConsultas, type Consulta } from '../../data/medico';
 
 const COLORS = {
   teal: '#007C94',
@@ -34,11 +34,14 @@ export default function AgendaMedicoScreen() {
   useFocusEffect(
     useCallback(() => {
       setConsultas([...getConsultas()]);
+      carregarAgendaMedico()
+        .then(() => setConsultas([...getConsultas()]))
+        .catch(() => {});
     }, [])
   );
 
   const hoje = consultas
-    .filter((c) => c.data === HOJE)
+    .filter((c) => c.data === HOJE && c.status !== 'cancelada')
     .sort((a, b) => a.hora.localeCompare(b.hora));
 
   const abertas = consultas

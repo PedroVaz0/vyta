@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,10 @@ import {
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { mascaraCpf, mascaraTelefone } from '../data/cadastro-form';
+import { isoParaBr } from '../lib/datas';
+import { useSessao } from '../lib/sessao';
+import { MODO_MOCK, buscarMedico, buscarPaciente } from '../services/api';
 
 const COLORS = {
   teal: '#007C94',
@@ -27,7 +31,7 @@ const COLORS = {
 
 type IconName = React.ComponentProps<typeof Feather>['name'];
 
-// trocar pelos dados reais do usuário logado.
+// Dados de exemplo: usados só quando EXPO_PUBLIC_API_URL não está definida.
 const usuarioInicial = {
   nome: 'Maperi Julu',
   email: 'maperi.julu@email.com',
@@ -93,13 +97,51 @@ export default function EditarPerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const [nome, setNome] = useState(usuarioInicial.nome);
-  const [email, setEmail] = useState(usuarioInicial.email);
-  const [telefone, setTelefone] = useState(usuarioInicial.telefone);
-  const [nascimento, setNascimento] = useState(usuarioInicial.nascimento);
+  const sessao = useSessao();
+  const inicial = MODO_MOCK
+    ? usuarioInicial
+    : { nome: sessao?.nome ?? '', email: '', telefone: '', nascimento: '', cpf: '' };
+
+  const [nome, setNome] = useState(inicial.nome);
+  const [email, setEmail] = useState(inicial.email);
+  const [telefone, setTelefone] = useState(inicial.telefone);
+  const [nascimento, setNascimento] = useState(inicial.nascimento);
+  const [cpf, setCpf] = useState(inicial.cpf);
+
+  useEffect(() => {
+    if (MODO_MOCK || !sessao) return;
+
+    if (sessao.tipo === 'medico') {
+      buscarMedico(sessao.usuarioId)
+        .then((m) => {
+          setNome(m.nome);
+          setEmail(m.email);
+          setTelefone(mascaraTelefone(m.telefone));
+        })
+        .catch(() => {});
+    } else {
+      buscarPaciente(sessao.usuarioId)
+        .then((p) => {
+          setNome(p.nome);
+          setEmail(p.email);
+          setTelefone(mascaraTelefone(p.telefone));
+          setNascimento(isoParaBr(p.dataNascimento));
+          setCpf(mascaraCpf(p.cpf));
+        })
+        .catch(() => {});
+    }
+  }, [sessao?.usuarioId]);
 
   const handleSalvar = () => {
-    // enviar os dados atualizados para o backend.
+    if (!MODO_MOCK) {
+      // O back-end ainda não tem rota para atualizar paciente/médico (PUT /pacientes/{id}).
+      Alert.alert(
+        'Edição indisponível',
+        'Por enquanto o servidor não permite alterar os dados do perfil.'
+      );
+      return;
+    }
+
     Alert.alert('Perfil atualizado', 'Suas informações foram salvas.', [
       { text: 'OK', onPress: () => router.back() },
     ]);
@@ -174,7 +216,7 @@ export default function EditarPerfilScreen() {
         <Campo
           label="CPF"
           icon="credit-card"
-          value={usuarioInicial.cpf}
+          value={cpf}
           editable={false}
         />
         <Text style={styles.helperText}>
