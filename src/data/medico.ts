@@ -12,7 +12,7 @@ import { getSessao } from '../lib/sessao';
 import {
   MODO_MOCK,
   alterarStatusConsulta,
-  buscarPaciente,
+  listarPacientesDoMedico,
   criarReceita,
   listarConsultasMedico,
   listarConsultasPaciente,
@@ -258,12 +258,14 @@ export async function carregarAgendaMedico() {
 
   const linhas = await listarConsultasMedico(id);
   const ids = [...new Set(linhas.map((l) => l.pacienteId))];
-  const dados = await Promise.all(ids.map((pid) => buscarPaciente(pid).catch(() => null)));
+  // Rota própria do médico: GET /pacientes/{id} só responde para o próprio paciente (403 para o médico).
+  const resumos = await listarPacientesDoMedico(id).catch(() => []);
+  const nascimentos = new Map(resumos.map((p) => [String(p.id), p.dataNascimento]));
   const anteriores = new Map(pacientes.map((p) => [p.id, p]));
 
   consultas = linhas.map(consultaDoApi);
   pacientes = ids
-    .map((pid, i) => {
+    .map((pid) => {
       const dele = linhas.filter((l) => l.pacienteId === pid);
       const realizadas = dele
         .filter((l) => statusDaApi(l.statusConsulta) === STATUS_BANCO.concluida)
@@ -273,7 +275,9 @@ export async function carregarAgendaMedico() {
       return {
         id: String(pid),
         nome: dele[0].pacienteNome,
-        idade: dados[i] ? idadeDe(dados[i]!.dataNascimento) : antigo?.idade ?? null,
+        idade: nascimentos.has(String(pid))
+          ? idadeDe(nascimentos.get(String(pid)))
+          : antigo?.idade ?? null,
         ultimaConsulta: realizadas[0] ? isoParaBr(realizadas[0].dataConsulta) : '—',
         historico: antigo?.historico ?? [],
       };

@@ -7,24 +7,26 @@
 //   EXPO_PUBLIC_API_URL=http://192.168.0.10:8080 (celular físico: IP do seu PC)
 // Sem essa variável o app roda em MODO_MOCK, com os dados de exemplo.
 //
-// Rotas usadas (todas já existem no back, exceto /auth/login):
-//   POST  /auth/login                         { cpf, senha, tipo } -> { id, nome, tipo }   (ver back-extra/AuthController.java)
+// Rotas usadas (todas já existem no back):
+//   POST  /auth/login                         { cpf, senha, tipo } -> { id, nome, tipo, token }
 //   POST  /pacientes | /medicos               cadastro
 //   GET   /pacientes/{id} | /medicos/{id}     perfil
-//   GET   /medicos                            lista de médicos
+//   GET   /medicos                            lista de médicos (com endereço)
+//   GET   /medicos/{id}/pacientes             pacientes atendidos pelo médico
 //   GET   /consultas/paciente/{id}            consultas do paciente
 //   GET   /consultas/medico/{id}              agenda do médico
 //   POST  /consultas                          agendar
 //   PATCH /consultas/{id}/status              { status }
 //   GET   /laudos/paciente/{id}
 //   GET   /pacientes/{id}/receitas
-//   POST  /{consultaId}/receitas              emitir receita (rota atual do back)
+//   POST  /consultas/{consultaId}/receitas    emitir receita
 
 import type { StatusBanco, TipoUsuario, ModalidadeApi } from '../constants/banco';
 import { statusParaApi, tipoUsuarioDaApi, tipoUsuarioParaApi } from '../constants/banco';
 import type { PayloadCadastro } from '../data/cadastro-form';
 import { soDigitos } from '../data/cadastro-form';
-import { getSessao } from '../lib/sessao';
+import { router } from 'expo-router';
+import { getSessao, limparSessao } from '../lib/sessao';
 
 export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 export const MODO_MOCK = API_URL === '';
@@ -71,6 +73,17 @@ async function requisicao<T>(metodo: string, caminho: string, corpo?: unknown): 
     });
   } catch {
     throw new Error('Sem conexão com o servidor. Verifique sua internet.');
+  }
+
+  // Token expirado/inválido (o login em si não manda token): volta para a tela de login.
+  if (res.status === 401 && token) {
+    limparSessao();
+    try {
+      router.replace('/login');
+    } catch {
+      // navegação ainda não montada: a próxima ação do usuário já falha com a mensagem abaixo
+    }
+    throw new Error('Sua sessão expirou. Faça login novamente.');
   }
 
   if (!res.ok) {
@@ -138,8 +151,9 @@ export async function login(cpf: string, senha: string, tipo: TipoUsuario) {
 
 export async function cadastrar(payload: PayloadCadastro) {
   const rota = payload.perfil === 'medico' ? '/medicos' : '/pacientes';
-  const r = await requisicao<{ id: number | string; nome: string }>('POST', rota, payload.corpo);
-  return { usuarioId: String(r.id), tipo: payload.perfil as TipoUsuario, nome: r.nome };
+  await requisicao<{ id: number | string; nome: string }>('POST', rota, payload.corpo);
+  // O cadastro não devolve token: entra logo em seguida com o CPF e a senha informados.
+  return login(payload.corpo.cpf, payload.corpo.senha, payload.perfil as TipoUsuario);
 }
 
 // ---------------------------------------------------------------------------
@@ -155,6 +169,7 @@ export type PacienteApi = {
   dataNascimento: string; // AAAA-MM-DD
   tipoSanguineo?: string | null;
   statusConta?: string;
+  enderecoId?: number | null;
   endereco?: EnderecoApi | null;
 };
 
@@ -167,8 +182,32 @@ export type MedicoApi = {
   crmUf: string;
   especialidade: string;
   statusConta?: string;
+  enderecoId?: number | null;
   endereco?: EnderecoApi | null;
 };
+
+/** Item de GET /medicos (lista pública, sem CPF/e-mail/telefone). */
+export type MedicoResumoApi = {
+  id: number;
+  nome: string;
+  crm: string;
+  crmUf: string;
+  especialidade: string;
+  statusConta?: string;
+  endereco?: EnderecoApi | null;
+};
+
+/** Item de GET /medicos/{id}/pacientes. */
+export type PacienteResumoApi = {
+  id: number;
+  nome: string;
+  dataNascimento: string; // AAAA-MM-DD
+  sexoBiologico?: string | null;
+  tipoSanguineo?: string | null;
+};
+
+export const listarPacientesDoMedico = (medicoId: string | number) =>
+  requisicao<PacienteResumoApi[]>('GET', `/medicos/${medicoId}/pacientes`);
 
 export const buscarPaciente = (id: string | number) =>
   requisicao<PacienteApi>('GET', `/pacientes/${id}`);
@@ -185,7 +224,7 @@ export type MedicoOpcao = {
 };
 
 export async function listarMedicos(): Promise<MedicoOpcao[]> {
-  const linhas = await requisicao<MedicoApi[]>('GET', '/medicos');
+  const linhas = await requisicao<MedicoResumoApi[]>('GET', '/medicos');
   return linhas
     .filter((m) => !m.statusConta || m.statusConta === 'ATIVA')
     .map((m) => ({
@@ -290,6 +329,7 @@ export type ReceitaApi = {
   dataEmissao: string;
   dataVencimento: string;
   tipoReceita: string;
+  numeroNotificacao?: string | null;
   statusReceita: string;
   itens: ReceitaItemApi[];
 };
